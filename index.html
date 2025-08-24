@@ -14,8 +14,29 @@
     content="visitor info, device info, browser, screen, IP, location, JSON export, fireworks, animation, canvas, particles, interactive, HTML5, JavaScript">
   <meta name="robots" content="index, follow" />
 
+  <!-- Favicon / Apple Touch Icon using online SVG -->
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/44/44386.png" />
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/44/44386.png" />
 
+  <!-- font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel="stylesheet">
 
+  <!-- Open Graph / Facebook -->
+  <meta property="og:title" content="All-in-One Visitor Info" />
+  <meta property="og:description"
+    content="Instantly detect your device, browser, screen, network, location and optional personal info with one click." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://yourwebsite.com/visitor-info" />
+  <meta property="og:image" content="https://yourwebsite.com/visitor-info-thumbnail.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="All-in-One Visitor Info" />
+  <meta name="twitter:description"
+    content="Instantly detect your device, browser, screen, network, location and optional personal info with one click." />
+  <meta name="twitter:image" content="https://yourwebsite.com/visitor-info-thumbnail.png" />
   <style>
     :root {
       --bg: #0b1020;
@@ -40,7 +61,9 @@
 
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      font-family: "Macondo", cursive;
+      font-weight: 400;
+      font-style: normal;
       background: var(--bg);
       background-size: cover;
       background-repeat: no-repeat;
@@ -88,6 +111,9 @@
     }
 
     button {
+      font-family: "Macondo", cursive;
+      font-weight: 400;
+      font-style: normal;
       cursor: pointer;
       border: 0;
       border-radius: 14px;
@@ -99,17 +125,26 @@
     }
 
     button.secondary {
+      font-family: "Macondo", cursive;
+      font-weight: 400;
+      font-style: normal;
       background: #1e2a52;
       color: var(--text)
     }
 
     button.ghost {
+      font-family: "Macondo", cursive;
+      font-weight: 400;
+      font-style: normal;
       background: transparent;
       color: var(--text);
       border: 1px solid #2b3b73
     }
 
     button:active {
+      font-family: "Macondo", cursive;
+      font-weight: 400;
+      font-style: normal;
       transform: translateY(1px)
     }
 
@@ -135,7 +170,9 @@
     }
 
     .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
+      font-family: "Macondo", cursive;
+      font-weight: 400;
+      font-style: normal;
     }
 
     .value {
@@ -194,7 +231,9 @@
     }
 
     .kbd {
-      font-family: ui-monospace, Consolas, monospace;
+      font-family: "Macondo", cursive;
+      font-weight: 400;
+      font-style: normal;
       font-size: 12px;
       background: #0e142a;
       border: 1px solid #2a3a72;
@@ -235,7 +274,7 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <script>
+  <!-- <script defer>
     // Main app script
     (function () {
       const $ = (sel) => document.querySelector(sel);
@@ -488,7 +527,7 @@
 
       // 11) Enhanced Hardware
       const enhancedHardware = await getEnhancedHardware();
-      addCard('Enhanced Hardware', [
+      addCard('Hardware', [
         { k: 'CPU Cores', v: cores },
         { k: 'Approx. RAM', v: mem },
         { k: 'GPU Vendor', v: gpu.vendor },
@@ -910,8 +949,1050 @@
     // detect();
 
 
+  </script> -->
+
+  <script defer>
+    // Main app script
+     document.addEventListener('DOMContentLoaded', function () {
+    const $ = (sel) => document.querySelector(sel);
+    const cardsEl = $('#cards');
+    const toastEl = $('#toast');
+    const state = { data: {} };
+
+    function toast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.remove('hidden');
+      setTimeout(() => toastEl.classList.add('hidden'), 2400);
+    }
+
+    function addCard(title, rows) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const h = document.createElement('h3');
+      h.textContent = title;
+      card.appendChild(h);
+      rows.forEach(r => {
+        const p = document.createElement('div');
+        p.innerHTML = `<div class="muted">${r.k}</div><div class="value mono">${escapeHTML(String(r.v))}</div>`
+        card.appendChild(p);
+      });
+      cardsEl.appendChild(card);
+    }
+
+    function escapeHTML(s) {
+      return s.replace(/[&<>'"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[c]));
+    }
+
+    function setData(path, value) {
+      const segs = path.split('.');
+      let ref = state.data;
+      for (let i = 0; i < segs.length - 1; i++) {
+        ref = ref[segs[i]] ?? (ref[segs[i]] = {});
+      }
+      ref[segs.at(-1)] = value;
+    }
+
+    function getTimeOffset() {
+      const mins = -new Date().getTimezoneOffset();
+      const sign = mins >= 0 ? '+' : '-';
+      const hh = String(Math.floor(Math.abs(mins) / 60)).padStart(2, '0');
+      const mm = String(Math.abs(mins) % 60).padStart(2, '0');
+      return `${sign}${hh}:${mm}`;
+    }
+
+    // Enhanced browser detection function
+    function detectBrowser(userAgent) {
+      let name = 'Unknown';
+      let version = 'Unknown';
+      let engine = 'Unknown';
+
+      // Detect engine first
+      if (userAgent.includes('Chrome')) engine = 'Blink';
+      else if (userAgent.includes('Safari')) engine = 'WebKit';
+      else if (userAgent.includes('Firefox')) engine = 'Gecko';
+      else if (userAgent.includes('Edge')) engine = 'EdgeHTML/Blink';
+      else if (userAgent.includes('MSIE') || userAgent.includes('Trident')) engine = 'Trident';
+
+      // Detect browser
+      if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+        name = 'Chrome';
+        const match = userAgent.match(/Chrome\/(\d+)/);
+        if (match) version = match[1];
+      } else if (userAgent.includes('Firefox')) {
+        name = 'Firefox';
+        const match = userAgent.match(/Firefox\/(\d+)/);
+        if (match) version = match[1];
+      } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+        name = 'Safari';
+        const match = userAgent.match(/Version\/(\d+)/);
+        if (match) version = match[1];
+      } else if (userAgent.includes('Edg')) {
+        name = 'Edge';
+        const match = userAgent.match(/Edg\/(\d+)/);
+        if (match) version = match[1];
+      } else if (userAgent.includes('MSIE') || userAgent.includes('Trident')) {
+        name = 'Internet Explorer';
+        const match = userAgent.match(/MSIE (\d+)/);
+        if (match) version = match[1];
+      } else if (userAgent.includes('Opera')) {
+        name = 'Opera';
+        const match = userAgent.match(/Opera\/(\d+)/);
+        if (match) version = match[1];
+      }
+
+      return { name, version, engine };
+    }
+
+    // Enhanced OS detection function
+    function detectOS(userAgent) {
+      let name = 'Unknown';
+      let version = 'Unknown';
+      let architecture = 'Unknown';
+
+      // Windows
+      if (userAgent.includes('Windows')) {
+        name = 'Windows';
+        if (userAgent.includes('Windows NT 10.0')) version = '10/11';
+        else if (userAgent.includes('Windows NT 6.3')) version = '8.1';
+        else if (userAgent.includes('Windows NT 6.2')) version = '8';
+        else if (userAgent.includes('Windows NT 6.1')) version = '7';
+        else if (userAgent.includes('Windows NT 6.0')) version = 'Vista';
+        else if (userAgent.includes('Windows NT 5.2')) version = 'Server 2003';
+        else if (userAgent.includes('Windows NT 5.1')) version = 'XP';
+        else if (userAgent.includes('Windows NT 5.0')) version = '2000';
+        else if (userAgent.includes('Windows 98')) version = '98';
+        else if (userAgent.includes('Windows 95')) version = '95';
+
+        if (userAgent.includes('WOW64') || userAgent.includes('Win64')) architecture = '64-bit';
+        else architecture = '32-bit';
+      }
+      // macOS
+      else if (userAgent.includes('Mac OS X')) {
+        name = 'macOS';
+        const match = userAgent.match(/Mac OS X (\d+[._]\d+)/);
+        if (match) version = match[1].replace('_', '.');
+        architecture = '64-bit';
+      }
+      // iOS
+      else if (userAgent.includes('iPhone OS')) {
+        name = 'iOS';
+        const match = userAgent.match(/iPhone OS (\d+[._]\d+)/);
+        if (match) version = match[1].replace('_', '.');
+        architecture = '64-bit';
+      }
+      // Android
+      else if (userAgent.includes('Android')) {
+        name = 'Android';
+        const match = userAgent.match(/Android (\d+\.\d+)/);
+        if (match) version = match[1];
+        architecture = '64-bit';
+      }
+      // Linux
+      else if (userAgent.includes('Linux')) {
+        name = 'Linux';
+        if (userAgent.includes('Ubuntu')) version = 'Ubuntu';
+        else if (userAgent.includes('Fedora')) version = 'Fedora';
+        else if (userAgent.includes('Debian')) version = 'Debian';
+        else if (userAgent.includes('CentOS')) version = 'CentOS';
+        else if (userAgent.includes('Red Hat')) version = 'Red Hat';
+        else if (userAgent.includes('SUSE')) version = 'SUSE';
+        else if (userAgent.includes('Arch')) version = 'Arch';
+        else version = 'Generic';
+
+        if (userAgent.includes('x86_64')) architecture = '64-bit';
+        else if (userAgent.includes('i686') || userAgent.includes('i586')) architecture = '32-bit';
+        else if (userAgent.includes('arm')) architecture = 'ARM';
+        else if (userAgent.includes('aarch64')) architecture = 'ARM64';
+      }
+      // BSD
+      else if (userAgent.includes('FreeBSD')) {
+        name = 'FreeBSD';
+        const match = userAgent.match(/FreeBSD (\d+\.\d+)/);
+        if (match) version = match[1];
+        architecture = '64-bit';
+      }
+      // Solaris
+      else if (userAgent.includes('SunOS')) {
+        name = 'Solaris';
+        const match = userAgent.match(/SunOS (\d+\.\d+)/);
+        if (match) version = match[1];
+        architecture = '64-bit';
+      }
+
+      return { name, version, architecture };
+    }
+
+    async function detect() {
+      cardsEl.innerHTML = '';
+      const nav = navigator;
+
+      // 1) Enhanced Browser & OS Detection
+      const ua = nav.userAgent;
+      const platform = nav.platform || (nav.userAgentData && nav.userAgentData.platform) || 'Unknown';
+      const languages = nav.languages || [nav.language];
+      const vendor = nav.vendor || 'n/a';
+      const onLine = nav.onLine;
+      const cookies = navigator.cookieEnabled;
+      const doNotTrack = nav.doNotTrack || window.doNotTrack || navigator.msDoNotTrack || 'unspecified';
+
+      // Enhanced browser detection
+      const browserInfo = detectBrowser(ua);
+      const osInfo = detectOS(ua);
+
+      // Additional browser capabilities
+      const webGL = 'WebGLRenderingContext' in window;
+      const webGL2 = 'WebGL2RenderingContext' in window;
+      const webAudio = 'AudioContext' in window || 'webkitAudioContext' in window;
+      const webRTC = 'RTCPeerConnection' in window;
+      const serviceWorker = 'serviceWorker' in navigator;
+      const pushManager = 'PushManager' in window;
+      const notifications = 'Notification' in window;
+      const geolocation = 'geolocation' in navigator;
+      const mediaDevices = 'mediaDevices' in navigator;
+      const permissions = 'permissions' in navigator;
+      const credentials = 'credentials' in navigator;
+      const payment = 'PaymentRequest' in window;
+      const share = 'share' in navigator;
+      const clipboard = 'clipboard' in navigator;
+      const wakeLock = 'wakeLock' in navigator;
+      const contacts = 'contacts' in navigator;
+      const bluetooth = 'bluetooth' in navigator;
+      const usb = 'usb' in navigator;
+      const serial = 'serial' in navigator;
+      const hid = 'hid' in navigator;
+      const gamepad = 'getGamepads' in navigator;
+      const vibration = 'vibrate' in navigator;
+      const pointer = 'PointerEvent' in window;
+      const touch = 'ontouchstart' in window;
+      const orientation = 'DeviceOrientationEvent' in window;
+      const motion = 'DeviceMotionEvent' in window;
+      const ambientLight = 'AmbientLightSensor' in window;
+      const proximity = 'ProximitySensor' in window;
+      const magnetometer = 'Magnetometer' in window;
+      const gyroscope = 'Gyroscope' in window;
+      const accelerometer = 'Accelerometer' in window;
+      const absoluteOrientation = 'AbsoluteOrientationSensor' in window;
+      const relativeOrientation = 'RelativeOrientationSensor' in window;
+      const gravity = 'GravitySensor' in window;
+      const linearAcceleration = 'LinearAccelerationSensor' in window;
+
+      addCard('Browser & OS', [
+        { k: 'User Agent', v: ua },
+        { k: 'Browser', v: `${browserInfo.name} ${browserInfo.version}` },
+        { k: 'Engine', v: browserInfo.engine },
+        { k: 'Platform', v: platform },
+        { k: 'OS', v: `${osInfo.name} ${osInfo.version}` },
+        { k: 'OS Architecture', v: osInfo.architecture },
+        { k: 'Languages', v: languages.join(', ') },
+        { k: 'Vendor', v: vendor },
+        { k: 'Online', v: onLine },
+        { k: 'Cookies Enabled', v: cookies },
+        { k: 'Do Not Track', v: doNotTrack }
+      ]);
+
+      addCard('Browser Capabilities', [
+        { k: 'WebGL', v: webGL ? 'Supported' : 'Not Supported' },
+        { k: 'WebGL 2', v: webGL2 ? 'Supported' : 'Not Supported' },
+        { k: 'Web Audio', v: webAudio ? 'Supported' : 'Not Supported' },
+        { k: 'WebRTC', v: webRTC ? 'Supported' : 'Not Supported' },
+        { k: 'Service Worker', v: serviceWorker ? 'Supported' : 'Not Supported' },
+        { k: 'Push Notifications', v: pushManager ? 'Supported' : 'Not Supported' },
+        { k: 'Notifications', v: notifications ? 'Supported' : 'Not Supported' },
+        { k: 'Geolocation', v: geolocation ? 'Supported' : 'Not Supported' },
+        { k: 'Media Devices', v: mediaDevices ? 'Supported' : 'Not Supported' },
+        { k: 'Permissions API', v: permissions ? 'Supported' : 'Not Supported' },
+        { k: 'Credentials API', v: credentials ? 'Supported' : 'Not Supported' },
+        { k: 'Payment Request', v: payment ? 'Supported' : 'Not Supported' },
+        { k: 'Share API', v: share ? 'Supported' : 'Not Supported' },
+        { k: 'Clipboard API', v: clipboard ? 'Supported' : 'Not Supported' },
+        { k: 'Wake Lock', v: wakeLock ? 'Supported' : 'Not Supported' },
+        { k: 'Contacts API', v: contacts ? 'Supported' : 'Not Supported' },
+        { k: 'Bluetooth', v: bluetooth ? 'Supported' : 'Not Supported' },
+        { k: 'USB', v: usb ? 'Supported' : 'Not Supported' },
+        { k: 'Serial', v: serial ? 'Supported' : 'Not Supported' },
+        { k: 'HID', v: hid ? 'Supported' : 'Not Supported' },
+        { k: 'Gamepad', v: gamepad ? 'Supported' : 'Not Supported' },
+        { k: 'Vibration', v: vibration ? 'Supported' : 'Not Supported' },
+        { k: 'Pointer Events', v: pointer ? 'Supported' : 'Not Supported' },
+        { k: 'Touch Events', v: touch ? 'Supported' : 'Not Supported' },
+        { k: 'Device Orientation', v: orientation ? 'Supported' : 'Not Supported' },
+        { k: 'Device Motion', v: motion ? 'Supported' : 'Not Supported' },
+        { k: 'Ambient Light', v: ambientLight ? 'Supported' : 'Not Supported' },
+        { k: 'Proximity Sensor', v: proximity ? 'Supported' : 'Not Supported' },
+        { k: 'Magnetometer', v: magnetometer ? 'Supported' : 'Not Supported' },
+        { k: 'Gyroscope', v: gyroscope ? 'Supported' : 'Not Supported' },
+        { k: 'Accelerometer', v: accelerometer ? 'Supported' : 'Not Supported' },
+        { k: 'Absolute Orientation', v: absoluteOrientation ? 'Supported' : 'Not Supported' },
+        { k: 'Relative Orientation', v: relativeOrientation ? 'Supported' : 'Not Supported' },
+        { k: 'Gravity Sensor', v: gravity ? 'Supported' : 'Not Supported' },
+        { k: 'Linear Acceleration', v: linearAcceleration ? 'Supported' : 'Not Supported' }
+      ]);
+
+      setData('browser', {
+        userAgent: ua,
+        name: browserInfo.name,
+        version: browserInfo.version,
+        engine: browserInfo.engine,
+        platform: platform,
+        languages: languages,
+        vendor: vendor,
+        online: onLine,
+        capabilities: {
+          webGL, webGL2, webAudio, webRTC, serviceWorker, pushManager,
+          notifications, geolocation, mediaDevices, permissions, credentials,
+          payment, share, clipboard, wakeLock, contacts, bluetooth, usb,
+          serial, hid, gamepad, vibration, pointer, touch, orientation,
+          motion, ambientLight, proximity, magnetometer, gyroscope,
+          accelerometer, absoluteOrientation, relativeOrientation,
+          gravity, linearAcceleration
+        }
+      });
+
+      setData('os', {
+        name: osInfo.name,
+        version: osInfo.version,
+        architecture: osInfo.architecture
+      });
+
+      // 2) Display
+      const dpr = window.devicePixelRatio || 1;
+      const screenW = screen.width, screenH = screen.height;
+      const availW = screen.availWidth, availH = screen.availHeight;
+      const inner = `${window.innerWidth}×${window.innerHeight}`;
+
+      addCard('Display', [
+        { k: 'Screen', v: `${screenW}×${screenH}` },
+        { k: 'Available', v: `${availW}×${availH}` },
+        { k: 'Viewport', v: inner },
+        { k: 'Pixel Ratio', v: dpr },
+        { k: 'Color Depth', v: `${screen.colorDepth} bit` },
+        { k: 'Color Gamut', v: screen.colorGamut || 'Unknown' },
+        { k: 'Orientation', v: screen.orientation ? screen.orientation.type : 'Unknown' }
+      ]);
+
+      setData('display', {
+        screen: [screenW, screenH],
+        available: [availW, availH],
+        viewport: [window.innerWidth, window.innerHeight],
+        pixelRatio: dpr,
+        colorDepth: screen.colorDepth,
+        colorGamut: screen.colorGamut,
+        orientation: screen.orientation ? screen.orientation.type : 'Unknown'
+      });
+
+      // 3) Hardware
+      const cores = nav.hardwareConcurrency || 'Unknown';
+      const mem = nav.deviceMemory ? `${nav.deviceMemory} GB` : 'Unknown';
+
+      // GPU via WebGL
+      const gpu = (() => {
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (!gl) return { vendor: 'Unavailable', renderer: 'Unavailable' };
+          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+          if (debugInfo) {
+            return {
+              vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+              renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+            };
+          }
+          return { vendor: gl.getParameter(gl.VENDOR), renderer: gl.getParameter(gl.RENDERER) };
+        } catch { return { vendor: 'Blocked', renderer: 'Blocked' } }
+      })();
+
+      addCard('Hardware', [
+        { k: 'CPU Cores', v: cores },
+        { k: 'Approx. RAM', v: mem },
+        { k: 'GPU Vendor', v: gpu.vendor },
+        { k: 'GPU Renderer', v: gpu.renderer },
+        { k: 'Max Touch Points', v: nav.maxTouchPoints || 'None' },
+        { k: 'Vibration Support', v: 'vibrate' in nav ? 'Yes' : 'No' },
+        { k: 'Bluetooth Support', v: 'bluetooth' in nav ? 'Yes' : 'No' }
+      ]);
+
+      setData('hardware.cores', cores);
+      setData('hardware.memory', mem);
+      setData('hardware.gpu', gpu);
+      setData('hardware.maxTouchPoints', nav.maxTouchPoints);
+      setData('hardware.vibration', 'vibrate' in nav);
+      setData('hardware.bluetooth', 'bluetooth' in nav);
+
+      // 4) Time & Locale
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
+      const offset = getTimeOffset();
+      const now = new Date().toISOString();
+
+      addCard('Time & Locale', [
+        { k: 'Time Zone', v: tz },
+        { k: 'UTC Offset', v: offset },
+        { k: 'Now (ISO)', v: now },
+        { k: 'Date Format', v: new Intl.DateTimeFormat().format(new Date()) },
+        { k: 'Number Format', v: new Intl.NumberFormat().format(1234.56) }
+      ]);
+
+      setData('time.timeZone', tz);
+      setData('time.utcOffset', offset);
+      setData('time.now', now);
+      setData('time.dateFormat', new Intl.DateTimeFormat().format(new Date()));
+      setData('time.numberFormat', new Intl.NumberFormat().format(1234.56));
+
+      // 5) Storage
+      try {
+        const est = await navigator.storage?.estimate?.();
+        const quota = est?.quota ?? 0;
+        const usage = est?.usage ?? 0;
+        addCard('Storage', [
+          { k: 'Used', v: humanBytes(usage) },
+          { k: 'Quota', v: humanBytes(quota) },
+          { k: 'Usage %', v: quota ? ((usage / quota * 100).toFixed(1) + '%') : 'Unknown' }
+        ]);
+        setData('storage', { usage, quota });
+      } catch {
+        addCard('Storage', [{ k: 'Status', v: 'Unavailable' }]);
+      }
+
+      // 6) Battery
+      try {
+        const bat = await navigator.getBattery();
+        const level = Math.round(bat.level * 100) + '%';
+        const charging = bat.charging;
+        const chargeTime = bat.chargingTime; // seconds
+        const disTime = bat.dischargingTime; // seconds
+        addCard('Battery', [
+          { k: 'Level', v: level },
+          { k: 'Charging', v: charging },
+          { k: 'Charge Time (s)', v: chargeTime },
+          { k: 'Discharge Time (s)', v: disTime }
+        ]);
+        setData('battery', { level: bat.level, charging, chargingTime: chargeTime, dischargingTime: disTime });
+      } catch {
+        addCard('Battery', [{ k: 'Status', v: 'Unavailable (not supported)' }]);
+      }
+
+      // 7) Enhanced Network
+      const conn = nav.connection || nav.mozConnection || nav.webkitConnection || {};
+
+      // Enhanced network detection with speed tests
+      const networkInfo = await getEnhancedNetworkInfo(conn);
+
+      addCard('Network', [
+        { k: 'Effective Type', v: conn.effectiveType ?? 'Unknown' },
+        { k: 'Downlink (Mbps)', v: conn.downlink ?? 'Unknown' },
+        { k: 'RTT (ms)', v: conn.rtt ?? 'Unknown' },
+        { k: 'Save-Data', v: conn.saveData ?? 'Unknown' },
+        { k: 'Connection Type', v: conn.type ?? 'Unknown' },
+        { k: 'Speed Test (Mbps)', v: networkInfo.speed },
+        { k: 'Latency (ms)', v: networkInfo.latency },
+        { k: 'Jitter (ms)', v: networkInfo.jitter }
+      ]);
+
+      setData('network', {
+        effectiveType: conn.effectiveType,
+        downlink: conn.downlink,
+        rtt: conn.rtt,
+        saveData: conn.saveData,
+        type: conn.type,
+        speed: networkInfo.speed,
+        latency: networkInfo.latency,
+        jitter: networkInfo.jitter
+      });
+
+      // 8) Enhanced Device & System Info
+      const deviceInfo = await getDeviceInfo();
+      addCard('Device & System', [
+        { k: 'Device Type', v: deviceInfo.deviceType },
+        { k: 'Device Model', v: deviceInfo.deviceModel },
+        { k: 'OS Version', v: deviceInfo.osVersion },
+        { k: 'OS Architecture', v: deviceInfo.osArch },
+        { k: 'Device Memory', v: deviceInfo.deviceMemory },
+        { k: 'Max Touch Points', v: deviceInfo.maxTouchPoints },
+        { k: 'Vibration Support', v: deviceInfo.vibrationSupport },
+        { k: 'Bluetooth Support', v: deviceInfo.bluetoothSupport }
+      ]);
+      setData('device', deviceInfo);
+
+      // 9) Performance & Speed
+      const perfInfo = await getPerformanceInfo();
+      addCard('Performance & Speed', [
+        { k: 'Page Load Time (ms)', v: perfInfo.pageLoadTime },
+        { k: 'DOM Ready Time (ms)', v: perfInfo.domReadyTime },
+        { k: 'First Paint (ms)', v: perfInfo.firstPaint },
+        { k: 'First Contentful Paint (ms)', v: perfInfo.firstContentfulPaint },
+        { k: 'Largest Contentful Paint (ms)', v: perfInfo.largestContentfulPaint },
+        { k: 'Cumulative Layout Shift', v: perfInfo.cumulativeLayoutShift },
+        { k: 'Total Blocking Time (ms)', v: perfInfo.totalBlockingTime }
+      ]);
+      setData('performance', perfInfo);
+
+      // 10) File System & Storage
+      const storageInfo = await getStorageInfo();
+      addCard('File System & Storage', [
+        { k: 'IndexedDB Support', v: storageInfo.indexedDB },
+        { k: 'Local Storage', v: storageInfo.localStorage },
+        { k: 'Session Storage', v: storageInfo.sessionStorage },
+        { k: 'Cache Storage', v: storageInfo.cacheStorage },
+        { k: 'File System Access', v: storageInfo.fileSystemAccess },
+        { k: 'WebSQL Support', v: storageInfo.webSQL },
+        { k: 'Storage Quota Used', v: storageInfo.quotaUsed },
+        { k: 'Storage Quota Total', v: storageInfo.quotaTotal }
+      ]);
+      setData('storage', { ...storageInfo, usage: state.data.storage?.usage, quota: state.data.storage?.quota });
+
+      // 11) Enhanced Hardware
+      const enhancedHardware = await getEnhancedHardware();
+      addCard('Enhanced Hardware', [
+        { k: 'Device Orientation', v: enhancedHardware.orientation },
+        { k: 'Device Motion', v: enhancedHardware.motion },
+        { k: 'Ambient Light', v: enhancedHardware.ambientLight },
+        { k: 'Proximity Sensor', v: enhancedHardware.proximity },
+        { k: 'Magnetometer', v: enhancedHardware.magnetometer },
+        { k: 'Gyroscope', v: enhancedHardware.gyroscope },
+        { k: 'Accelerometer', v: enhancedHardware.accelerometer }
+      ]);
+      setData('hardware', { ...state.data.hardware, ...enhancedHardware });
+
+      // 12) Public IP (best-effort, requires internet)
+      await detectIP();
+
+      // 13) Location (auto-detect)
+      await detectLocation();
+
+      // 14) Media Devices
+      await detectMediaDevices();
+
+      // 15) Permissions Status
+      await checkPermissions();
+
+      toast('Scan complete');
+    }
+
+    async function detectIP() {
+      const targets = [
+        'https://api.ipify.org?format=json',
+        'https://ifconfig.me/all.json',
+        'https://ipinfo.io/json'
+      ];
+      for (const url of targets) {
+        try {
+          const res = await fetch(url, { mode: 'cors' });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const ip = data.ip || data.ip_addr || data.query || null;
+          if (ip) {
+            addCard('Public IP', [
+              { k: 'Address', v: ip },
+              { k: 'Source', v: (new URL(url)).host },
+              { k: 'Country', v: data.country || 'Unknown' },
+              { k: 'City', v: data.city || 'Unknown' },
+              { k: 'Region', v: data.region || 'Unknown' },
+              { k: 'ISP', v: data.org || data.isp || 'Unknown' }
+            ]);
+            setData('network.publicIP', { ip, country: data.country, city: data.city, region: data.region, isp: data.org || data.isp });
+            return;
+          }
+        } catch (e) {/* ignore and try next */ }
+      }
+      addCard('Public IP', [{ k: 'Address', v: 'Unavailable (blocked or offline)' }]);
+    }
+
+    function humanBytes(x) {
+      if (!x && x !== 0) return 'Unknown';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let i = 0; let n = x;
+      while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+      return `${n.toFixed(n < 10 ? 2 : 1)} ${units[i]}`;
+    }
+
+    // Location detection (auto-run)
+    async function detectLocation() {
+      if (!('geolocation' in navigator)) {
+        addCard('Location (GPS)', [{ k: 'Status', v: 'Geolocation not supported' }]);
+        return;
+      }
+
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          });
+        });
+
+        const { latitude, longitude, accuracy, altitude, heading, speed } = position.coords;
+        const ts = new Date(position.timestamp).toISOString();
+
+        addCard('Location (GPS)', [
+          { k: 'Latitude', v: latitude },
+          { k: 'Longitude', v: longitude },
+          { k: 'Accuracy (m)', v: accuracy },
+          { k: 'Altitude', v: altitude ?? 'n/a' },
+          { k: 'Heading', v: heading ?? 'n/a' },
+          { k: 'Speed (m/s)', v: speed ?? 'n/a' },
+          { k: 'Timestamp', v: ts }
+        ]);
+
+        setData('location', { latitude, longitude, accuracy, altitude, heading, speed, timestamp: ts });
+      } catch (err) {
+        addCard('Location (GPS)', [{ k: 'Status', v: `Permission denied or unavailable (${err.code})` }]);
+      }
+    }
+
+    // Copy / Download / Share
+    function toPrettyJSON() { return JSON.stringify(state.data, null, 2); }
+
+    async function copyJSON() {
+      try {
+        await navigator.clipboard.writeText(toPrettyJSON());
+        toast('Copied JSON');
+      }
+      catch {
+        toast('Copy failed');
+      }
+    }
+
+    function downloadJSON() {
+      const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `visitor-info-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function share() {
+      const text = toPrettyJSON();
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Visitor Info', text });
+        }
+        catch { }
+      } else {
+        copyJSON();
+      }
+    }
+
+    async function getEnhancedNetworkInfo(conn) {
+      const result = { speed: 'Unknown', latency: 'Unknown', jitter: 'Unknown' };
+
+      try {
+        // Simple speed test using image download
+        const startTime = performance.now();
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZmZmIi8+PC9zdmc+';
+        });
+        const endTime = performance.now();
+        const downloadTime = endTime - startTime;
+
+        // Estimate speed (rough calculation)
+        const dataSize = 0.0001; // ~100 bytes in MB
+        const speedMbps = (dataSize / (downloadTime / 1000)) * 8;
+        result.speed = speedMbps > 1 ? `${speedMbps.toFixed(2)} Mbps` : `${(speedMbps * 1000).toFixed(2)} Kbps`;
+
+        // Latency test
+        const latencyTests = [];
+        for (let i = 0; i < 5; i++) {
+          const start = performance.now();
+          try {
+            await fetch('data:text/plain,test', { cache: 'no-cache' });
+            const end = performance.now();
+            latencyTests.push(end - start);
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+
+        if (latencyTests.length > 0) {
+          const avgLatency = latencyTests.reduce((a, b) => a + b, 0) / latencyTests.length;
+          result.latency = `${avgLatency.toFixed(1)} ms`;
+
+          // Calculate jitter (standard deviation)
+          const variance = latencyTests.reduce((acc, val) => acc + Math.pow(val - avgLatency, 2), 0) / latencyTests.length;
+          const jitter = Math.sqrt(variance);
+          result.jitter = `${jitter.toFixed(1)} ms`;
+        }
+      } catch (e) {
+        // Fallback to connection API values
+        if (conn.rtt) result.latency = `${conn.rtt} ms`;
+        if (conn.downlink) result.speed = `${conn.downlink} Mbps`;
+      }
+
+      return result;
+    }
+
+    async function getDeviceInfo() {
+      const nav = navigator;
+      const ua = nav.userAgent;
+
+      // Detect device type
+      let deviceType = 'Desktop';
+      if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+        deviceType = 'Mobile';
+      } else if (/Tablet|iPad/i.test(ua)) {
+        deviceType = 'Tablet';
+      }
+
+      // Detect OS version
+      let osVersion = 'Unknown';
+      if (/Windows NT (\d+\.\d+)/.test(ua)) {
+        const match = ua.match(/Windows NT (\d+\.\d+)/);
+        const version = parseFloat(match[1]);
+        if (version === 10.0) osVersion = 'Windows 10/11';
+        else if (version === 6.3) osVersion = 'Windows 8.1';
+        else if (version === 6.2) osVersion = 'Windows 8';
+        else if (version === 6.1) osVersion = 'Windows 7';
+        else osVersion = `Windows ${version}`;
+      } else if (/Mac OS X (\d+[._]\d+)/.test(ua)) {
+        const match = ua.match(/Mac OS X (\d+[._]\d+)/);
+        osVersion = `macOS ${match[1].replace('_', '.')}`;
+      } else if (/Android (\d+\.\d+)/.test(ua)) {
+        const match = ua.match(/Android (\d+\.\d+)/);
+        osVersion = `Android ${match[1]}`;
+      } else if (/iPhone OS (\d+[._]\d+)/.test(ua)) {
+        const match = ua.match(/iPhone OS (\d+[._]\d+)/);
+        osVersion = `iOS ${match[1].replace('_', '.')}`;
+      }
+
+      // Detect OS architecture
+      let osArch = 'Unknown';
+      if (/Win64|WOW64/.test(ua)) osArch = '64-bit';
+      else if (/Win32/.test(ua)) osArch = '32-bit';
+      else if (/Macintosh/.test(ua)) osArch = '64-bit';
+      else if (/Linux x86_64/.test(ua)) osArch = '64-bit';
+      else if (/Linux i[3-6]86/.test(ua)) osArch = '32-bit';
+
+      // Device model detection
+      let deviceModel = 'Unknown';
+      if (/iPhone/.test(ua)) {
+        const match = ua.match(/iPhone OS (\d+[._]\d+)/);
+        if (match) {
+          const version = parseFloat(match[1].replace('_', '.'));
+          if (version >= 14) deviceModel = 'iPhone (Modern)';
+          else if (version >= 12) deviceModel = 'iPhone (Recent)';
+          else deviceModel = 'iPhone (Legacy)';
+        }
+      } else if (/iPad/.test(ua)) {
+        deviceModel = 'iPad';
+      } else if (/Android/.test(ua)) {
+        deviceModel = 'Android Device';
+      } else if (/Macintosh/.test(ua)) {
+        deviceModel = 'Mac';
+      } else if (/Windows/.test(ua)) {
+        deviceModel = 'PC';
+      }
+
+      return {
+        deviceType,
+        deviceModel,
+        osVersion,
+        osArch,
+        deviceMemory: nav.deviceMemory ? `${nav.deviceMemory} GB` : 'Unknown',
+        maxTouchPoints: nav.maxTouchPoints || 'None',
+        vibrationSupport: 'vibrate' in nav ? 'Yes' : 'No',
+        bluetoothSupport: 'bluetooth' in nav ? 'Yes' : 'No'
+      };
+    }
+
+    async function getPerformanceInfo() {
+      const perf = performance;
+      const nav = perf.getEntriesByType('navigation')[0];
+
+      let pageLoadTime = 'Unknown';
+      let domReadyTime = 'Unknown';
+      let firstPaint = 'Unknown';
+      let firstContentfulPaint = 'Unknown';
+      let largestContentfulPaint = 'Unknown';
+      let cumulativeLayoutShift = 'Unknown';
+      let totalBlockingTime = 'Unknown';
+
+      if (nav) {
+        pageLoadTime = `${Math.round(nav.loadEventEnd - nav.loadEventStart)} ms`;
+        domReadyTime = `${Math.round(nav.domContentLoadedEventEnd - nav.domContentLoadedEventStart)} ms`;
+      }
+
+      // Web Vitals
+      try {
+        const paintEntries = perf.getEntriesByType('paint');
+        const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+        if (fcp) firstContentfulPaint = `${Math.round(fcp.startTime)} ms`;
+
+        // First paint (approximation)
+        if (paintEntries.length > 0) {
+          firstPaint = `${Math.round(paintEntries[0].startTime)} ms`;
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+
+      // Largest Contentful Paint
+      try {
+        const observer = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          if (lastEntry) {
+            largestContentfulPaint = `${Math.round(lastEntry.startTime)} ms`;
+          }
+        });
+        observer.observe({ entryTypes: ['largest-contentful-paint'] });
+      } catch (e) {
+        // Ignore errors
+      }
+
+      return {
+        pageLoadTime,
+        domReadyTime,
+        firstPaint,
+        firstContentfulPaint,
+        largestContentfulPaint,
+        cumulativeLayoutShift,
+        totalBlockingTime
+      };
+    }
+
+    async function getStorageInfo() {
+      const result = {
+        indexedDB: 'Unknown',
+        localStorage: 'Unknown',
+        sessionStorage: 'Unknown',
+        cacheStorage: 'Unknown',
+        fileSystemAccess: 'Unknown',
+        webSQL: 'Unknown',
+        quotaUsed: 'Unknown',
+        quotaTotal: 'Unknown'
+      };
+
+      // Test various storage APIs
+      try {
+        result.indexedDB = 'indexedDB' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.indexedDB = 'Blocked';
+      }
+
+      try {
+        result.localStorage = 'localStorage' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.localStorage = 'Blocked';
+      }
+
+      try {
+        result.sessionStorage = 'sessionStorage' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.sessionStorage = 'Blocked';
+      }
+
+      try {
+        result.cacheStorage = 'caches' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.cacheStorage = 'Blocked';
+      }
+
+      try {
+        result.fileSystemAccess = 'showOpenFilePicker' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.fileSystemAccess = 'Not Supported';
+      }
+
+      try {
+        result.webSQL = 'openDatabase' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.webSQL = 'Not Supported';
+      }
+
+      // Get storage quota info
+      try {
+        const est = await navigator.storage?.estimate?.();
+        if (est) {
+          result.quotaUsed = humanBytes(est.usage || 0);
+          result.quotaTotal = humanBytes(est.quota || 0);
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+
+      return result;
+    }
+
+    async function getEnhancedHardware() {
+      const result = {
+        orientation: 'Unknown',
+        motion: 'Unknown',
+        ambientLight: 'Unknown',
+        proximity: 'Unknown',
+        magnetometer: 'Unknown',
+        gyroscope: 'Unknown',
+        accelerometer: 'Unknown'
+      };
+
+      // Device orientation
+      try {
+        if ('DeviceOrientationEvent' in window) {
+          result.orientation = 'Supported';
+        } else {
+          result.orientation = 'Not Supported';
+        }
+      } catch (e) {
+        result.orientation = 'Blocked';
+      }
+
+      // Device motion
+      try {
+        if ('DeviceMotionEvent' in window) {
+          result.motion = 'Supported';
+        } else {
+          result.motion = 'Not Supported';
+        }
+      } catch (e) {
+        result.motion = 'Blocked';
+      }
+
+      // Ambient light sensor
+      try {
+        if ('AmbientLightSensor' in window) {
+          result.ambientLight = 'Supported';
+        } else {
+          result.ambientLight = 'Not Supported';
+        }
+      } catch (e) {
+        result.ambientLight = 'Not Supported';
+      }
+
+      // Proximity sensor
+      try {
+        if ('ProximitySensor' in window) {
+          result.proximity = 'Supported';
+        } else {
+          result.proximity = 'Not Supported';
+        }
+      } catch (e) {
+        result.proximity = 'Not Supported';
+      }
+
+      // Magnetometer
+      try {
+        if ('Magnetometer' in window) {
+          result.magnetometer = 'Supported';
+        } else {
+          result.magnetometer = 'Not Supported';
+        }
+      } catch (e) {
+        result.magnetometer = 'Not Supported';
+      }
+
+      // Gyroscope
+      try {
+        if ('Gyroscope' in window) {
+          result.gyroscope = 'Supported';
+        } else {
+          result.gyroscope = 'Not Supported';
+        }
+      } catch (e) {
+        result.gyroscope = 'Not Supported';
+      }
+
+      // Accelerometer
+      try {
+        if ('Accelerometer' in window) {
+          result.accelerometer = 'Supported';
+        } else {
+          result.accelerometer = 'Not Supported';
+        }
+      } catch (e) {
+        result.accelerometer = 'Not Supported';
+      }
+
+      return result;
+    }
+
+    async function detectMediaDevices() {
+      if (!navigator.mediaDevices) {
+        addCard('Media Devices', [{ k: 'Status', v: 'Not Supported' }]);
+        return;
+      }
+
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+        const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+        const videoInputs = devices.filter(device => device.kind === 'videoinput');
+
+        addCard('Media Devices', [
+          { k: 'Audio Inputs', v: audioInputs.length },
+          { k: 'Audio Outputs', v: audioOutputs.length },
+          { k: 'Video Inputs', v: videoInputs.length },
+          { k: 'Total Devices', v: devices.length }
+        ]);
+
+        setData('mediaDevices', {
+          audioInputs: audioInputs.length,
+          audioOutputs: audioOutputs.length,
+          videoInputs: videoInputs.length,
+          total: devices.length
+        });
+      } catch (e) {
+        addCard('Media Devices', [{ k: 'Status', v: 'Permission denied or blocked' }]);
+      }
+    }
+
+    async function checkPermissions() {
+      if (!navigator.permissions) {
+        addCard('Permissions', [{ k: 'Status', v: 'Permissions API not supported' }]);
+        return;
+      }
+
+      const permissions = [
+        'geolocation',
+        'notifications',
+        'camera',
+        'microphone',
+        'persistent-storage',
+        'midi',
+        'payment',
+        'background-sync'
+      ];
+
+      const results = {};
+      for (const permission of permissions) {
+        try {
+          const status = await navigator.permissions.query({ name: permission });
+          results[permission] = status.state;
+        } catch (e) {
+          results[permission] = 'Not Supported';
+        }
+      }
+
+      addCard('Permissions', [
+        { k: 'Geolocation', v: results.geolocation },
+        { k: 'Notifications', v: results.notifications },
+        { k: 'Camera', v: results.camera },
+        { k: 'Microphone', v: results.microphone },
+        { k: 'Persistent Storage', v: results['persistent-storage'] },
+        { k: 'MIDI', v: results.midi },
+        { k: 'Payment', v: results.payment },
+        { k: 'Background Sync', v: results['background-sync'] }
+      ]);
+
+      setData('permissions', results);
+    }
+
+    // Wire up event listeners
+    $('#scanBtn').addEventListener('click', detect);
+    $('#copyBtn').addEventListener('click', copyJSON);
+    $('#downloadBtn').addEventListener('click', downloadJSON);
+    $('#shareBtn').addEventListener('click', share);
+
+    // Auto-run once for a quick experience
+    // Uncomment the next line if you want it to run automatically
+    // detect();
+  });
   </script>
-  <script>
+  <script defer>
     const canvas = document.getElementById("fireworks");
     const ctx = canvas.getContext("2d");
 
