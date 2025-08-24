@@ -1543,28 +1543,140 @@
       // Copy / Download / Share
       function toPrettyJSON() { return JSON.stringify(state.data, null, 2); }
 
+      // async function copyJSON() {
+      //   try {
+      //     await navigator.clipboard.writeText(toPrettyJSON());
+      //     toast('Copied JSON');
+      //   }
+      //   catch {
+      //     toast('Copy failed');
+      //   }
+      // }
+      // ... existing code ...
+
+      // Enhanced Copy function with fallback
       async function copyJSON() {
+        if (!state.data || Object.keys(state.data).length === 0) {
+          toast('No data to copy. Please scan first.');
+          return;
+        }
+
         try {
           await navigator.clipboard.writeText(toPrettyJSON());
-          toast('Copied JSON');
-        }
-        catch {
-          toast('Copy failed');
+          toast('Copied JSON to clipboard');
+        } catch (err) {
+          // Fallback for older browsers or when clipboard API fails
+          try {
+            const textArea = document.createElement('textarea');
+            textArea.value = toPrettyJSON();
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            textArea.remove();
+            toast('Copied JSON to clipboard (fallback method)');
+          } catch (fallbackErr) {
+            toast('Copy failed. Please try selecting and copying manually.');
+            console.error('Copy failed:', err, fallbackErr);
+          }
         }
       }
+
+      // Enhanced Download function with data validation
+      function downloadJSON() {
+        if (!state.data || Object.keys(state.data).length === 0) {
+          toast('No data to download. Please scan first.');
+          return;
+        }
+
+        try {
+          const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `visitor-info-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          toast('JSON file downloaded');
+        } catch (err) {
+          toast('Download failed. Please try again.');
+          console.error('Download failed:', err);
+        }
+      }
+
+      // Enhanced Share function with better error handling
+      async function share() {
+        if (!state.data || Object.keys(state.data).length === 0) {
+          toast('No data to share. Please scan first.');
+          return;
+        }
+
+        const text = toPrettyJSON();
+
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Visitor Info',
+              text: text.substring(0, 100) + '...', // Truncate for share
+              url: window.location.href
+            });
+            toast('Shared successfully');
+          } catch (err) {
+            if (err.name === 'AbortError') {
+              toast('Share cancelled');
+            } else {
+              toast('Share failed, copying to clipboard instead');
+              copyJSON();
+            }
+          }
+        } else {
+          toast('Share not supported, copying to clipboard instead');
+          copyJSON();
+        }
+      }
+
+      // ... existing code ...
+
+      // function downloadJSON() {
+      //   const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
+      //   const url = URL.createObjectURL(blob);
+      //   const a = document.createElement('a');
+      //   a.href = url;
+      //   a.download = `visitor-info-${Date.now()}.json`;
+      //   document.body.appendChild(a);
+      //   a.click();
+      //   a.remove();
+      //   URL.revokeObjectURL(url);
+      // }
 
       function downloadJSON() {
-        const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `visitor-info-${Date.now()}.json`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      }
+  const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `visitor-info-${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
+      // async function share() {
+      //   const text = toPrettyJSON();
+      //   if (navigator.share) {
+      //     try {
+      //       await navigator.share({ title: 'Visitor Info', text });
+      //     }
+      //     catch { }
+      //   } else {
+      //     copyJSON();
+      //   }
+      // }
       async function share() {
         const text = toPrettyJSON();
         if (navigator.share) {
@@ -1572,8 +1684,9 @@
             await navigator.share({ title: 'Visitor Info', text });
           }
           catch { }
+          // Silent failure - user doesn't know what happened
         } else {
-          copyJSON();
+          copyJSON(); // Fallback to copy
         }
       }
 
