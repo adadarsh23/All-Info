@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Page info -->
+  <title>All-In-One Visitor Info</title>
+  <meta name="description"
+    content="All-in-one visitor info page: fetch device, browser, screen, network, location and optional personal info.">
+  <meta name="author" content="Âd Adarsh">
+  <meta name="keywords"
+    content="visitor info, device info, browser, screen, IP, location, JSON export, fireworks, animation, canvas, particles, interactive, HTML5, JavaScript">
+  <meta name="robots" content="index, follow" />
+
+
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121a33;
+      --muted: #a9b4d0;
+      --text: #e7ecf6;
+      --accent: #6ea8fe;
+      --ok: #40c057;
+      --warn: #fab005;
+      --err: #fa5252;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      background: var(--bg);
+      background-size: cover;
+      background-repeat: no-repeat;
+      color: var(--text, #fff);
+      /* overflow: hidden; */
+      /* prevent scrollbars */
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px
+    }
+
+    /* Fullscreen canvas for fireworks */
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      /* don’t block clicks */
+    }
+
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap
+    }
+
+    .brand {
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 700;
+      letter-spacing: .3px
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 600;
+      transition: transform .08s ease, opacity .2s ease;
+      background: var(--accent);
+      color: #051026
+    }
+
+    button.secondary {
+      background: #1e2a52;
+      color: var(--text)
+    }
+
+    button.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid #2b3b73
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 18px
+    }
+
+    .card {
+      background: linear-gradient(180deg, #121a33, #0f1730);
+      border: 1px solid #243165;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(6, 12, 28, .45)
+    }
+
+    .card h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      color: #c7d3f5
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
+    }
+
+    .value {
+      word-break: break-word;
+      color: #eef3ff
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    .footer {
+      opacity: .8;
+      font-size: 13px;
+      margin-top: 18px
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #2a3a72;
+      background: #0d1630
+    }
+
+    .ok {
+      color: var(--ok)
+    }
+
+    .warn {
+      color: var(--warn)
+    }
+
+    .err {
+      color: var(--err)
+    }
+
+    .hidden {
+      display: none
+    }
+
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: #0f1730;
+      border: 1px solid #243165;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+    }
+
+    .kbd {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 12px;
+      background: #0e142a;
+      border: 1px solid #2a3a72;
+      padding: 2px 6px;
+      border-radius: 6px
+    }
+
+    .hero {
+      margin-top: 16px;
+      background: linear-gradient(90deg, rgba(110, 168, 254, .18), transparent);
+      border: 1px solid #243165;
+      padding: 14px;
+      border-radius: 16px
+    }
+
+    a {
+      color: #9ec5ff
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="fireworks"></canvas>
+  <div class="container">
+    <header>
+      <div class="brand">All-In-One Visitor Info</div>
+      <div class="actions">
+        <button id="scanBtn" title="Collect all available info">Show my info</button>
+        <button id="copyBtn" class="ghost" title="Copy JSON to clipboard">Copy JSON</button>
+        <button id="downloadBtn" class="ghost" title="Download JSON file">Download JSON</button>
+        <button id="shareBtn" class="ghost" title="Share using system share sheet">Share</button>
+      </div>
+    </header>
+    <section class="grid" id="cards">
+      <!-- Cards will be injected here -->
+    </section>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    // Main app script
+    (function () {
+      const $ = (sel) => document.querySelector(sel);
+      const cardsEl = $('#cards');
+      const toastEl = $('#toast');
+      const state = { data: {} };
+
+      function toast(msg) {
+        toastEl.textContent = msg; toastEl.classList.remove('hidden');
+        setTimeout(() => toastEl.classList.add('hidden'), 2400);
+      }
+
+      // ...rest of the main app script...
+      // ...existing code...
+    })();
+    const $ = (sel) => document.querySelector(sel);
+    const cardsEl = $('#cards');
+    const toastEl = $('#toast');
+    const state = { data: {} };
+
+    function toast(msg) {
+      toastEl.textContent = msg; toastEl.classList.remove('hidden');
+      setTimeout(() => toastEl.classList.add('hidden'), 2400);
+    }
+
+    function addCard(title, rows) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const h = document.createElement('h3'); h.textContent = title; card.appendChild(h);
+      rows.forEach(r => {
+        const p = document.createElement('div');
+        p.innerHTML = `<div class="muted">${r.k}</div><div class="value mono">${escapeHTML(String(r.v))}</div>`
+        card.appendChild(p);
+      });
+      cardsEl.appendChild(card);
+    }
+
+    function escapeHTML(s) {
+      return s.replace(/[&<>'"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[c]));
+    }
+
+    function setData(path, value) {
+      const segs = path.split('.');
+      let ref = state.data;
+      for (let i = 0; i < segs.length - 1; i++) { ref = ref[segs[i]] ?? (ref[segs[i]] = {}); }
+      ref[segs.at(-1)] = value;
+    }
+
+    function getTimeOffset() {
+      const mins = -new Date().getTimezoneOffset();
+      const sign = mins >= 0 ? '+' : '-';
+      const hh = String(Math.floor(Math.abs(mins) / 60)).padStart(2, '0');
+      const mm = String(Math.abs(mins) % 60).padStart(2, '0');
+      return `${sign}${hh}:${mm}`;
+    }
+
+    async function detect() {
+      cardsEl.innerHTML = '';
+      const nav = navigator;
+
+      // 1) Browser & OS
+      const ua = nav.userAgent;
+      const platform = nav.platform || (nav.userAgentData && nav.userAgentData.platform) || 'Unknown';
+      const languages = nav.languages || [nav.language];
+      const vendor = nav.vendor || 'n/a';
+      const onLine = nav.onLine;
+      const cookies = navigator.cookieEnabled;
+      const doNotTrack = nav.doNotTrack || window.doNotTrack || navigator.msDoNotTrack || 'unspecified';
+
+      addCard('Browser & OS', [
+        { k: 'User Agent', v: ua },
+        { k: 'Platform', v: platform },
+        { k: 'Languages', v: languages.join(', ') },
+        { k: 'Vendor', v: vendor },
+        { k: 'Online', v: onLine },
+        { k: 'Cookies Enabled', v: cookies },
+        { k: 'Do Not Track', v: doNotTrack }
+      ]);
+
+      setData('browser.userAgent', ua);
+      setData('browser.platform', platform);
+      setData('browser.languages', languages);
+      setData('browser.vendor', vendor);
+      setData('browser.online', onLine);
+      setData('privacy.cookiesEnabled', cookies);
+      setData('privacy.doNotTrack', doNotTrack);
+
+      // 2) Display
+      const dpr = window.devicePixelRatio || 1;
+      const screenW = screen.width, screenH = screen.height;
+      const availW = screen.availWidth, availH = screen.availHeight;
+      const inner = `${window.innerWidth}×${window.innerHeight}`;
+
+      addCard('Display', [
+        { k: 'Screen', v: `${screenW}×${screenH}` },
+        { k: 'Available', v: `${availW}×${availH}` },
+        { k: 'Viewport', v: inner },
+        { k: 'Pixel Ratio', v: dpr }
+      ]);
+
+      setData('display', { screen: [screenW, screenH], available: [availW, availH], viewport: [window.innerWidth, window.innerHeight], pixelRatio: dpr });
+
+      // 3) Hardware
+      const cores = nav.hardwareConcurrency || 'Unknown';
+      const mem = nav.deviceMemory ? `${nav.deviceMemory} GB` : 'Unknown';
+
+      // GPU via WebGL
+      const gpu = (() => {
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (!gl) return { vendor: 'Unavailable', renderer: 'Unavailable' };
+          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+          if (debugInfo) {
+            return {
+              vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+              renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+            };
+          }
+          return { vendor: gl.getParameter(gl.VENDOR), renderer: gl.getParameter(gl.RENDERER) };
+        } catch { return { vendor: 'Blocked', renderer: 'Blocked' } }
+      })();
+
+      addCard('Hardware', [
+        { k: 'CPU Cores', v: cores },
+        { k: 'Approx. RAM', v: mem },
+        { k: 'GPU Vendor', v: gpu.vendor },
+        { k: 'GPU Renderer', v: gpu.renderer }
+      ]);
+
+      setData('hardware.cores', cores);
+      setData('hardware.memory', mem);
+      setData('hardware.gpu', gpu);
+
+      // 4) Time & Locale
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
+      const offset = getTimeOffset();
+      const now = new Date().toISOString();
+
+      addCard('Time & Locale', [
+        { k: 'Time Zone', v: tz },
+        { k: 'UTC Offset', v: offset },
+        { k: 'Now (ISO)', v: now }
+      ]);
+
+      setData('time.timeZone', tz);
+      setData('time.utcOffset', offset);
+      setData('time.now', now);
+
+      // 5) Storage
+      try {
+        const est = await navigator.storage?.estimate?.();
+        const quota = est?.quota ?? 0; const usage = est?.usage ?? 0;
+        addCard('Storage', [
+          { k: 'Used', v: humanBytes(usage) },
+          { k: 'Quota', v: humanBytes(quota) },
+          { k: 'Usage %', v: quota ? ((usage / quota * 100).toFixed(1) + '%') : 'Unknown' }
+        ]);
+        setData('storage', { usage, quota });
+      } catch {
+        addCard('Storage', [{ k: 'Status', v: 'Unavailable' }]);
+      }
+
+      // 6) Battery
+      try {
+        const bat = await navigator.getBattery();
+        const level = Math.round(bat.level * 100) + '%';
+        const charging = bat.charging;
+        const chargeTime = bat.chargingTime; // seconds
+        const disTime = bat.dischargingTime; // seconds
+        addCard('Battery', [
+          { k: 'Level', v: level },
+          { k: 'Charging', v: charging },
+          { k: 'Charge Time (s)', v: chargeTime },
+          { k: 'Discharge Time (s)', v: disTime }
+        ]);
+        setData('battery', { level: bat.level, charging, chargingTime: chargeTime, dischargingTime: disTime });
+      } catch {
+        addCard('Battery', [{ k: 'Status', v: 'Unavailable (not supported)' }]);
+      }
+
+      // 7) Network
+      // 7) Network
+      const conn = nav.connection || nav.mozConnection || nav.webkitConnection || {};
+
+      // Enhanced network detection with speed tests
+      const networkInfo = await getEnhancedNetworkInfo(conn);
+
+      addCard('Network', [
+        { k: 'Effective Type', v: conn.effectiveType ?? 'Unknown' },
+        { k: 'Downlink (Mbps)', v: conn.downlink ?? 'Unknown' },
+        { k: 'RTT (ms)', v: conn.rtt ?? 'Unknown' },
+        { k: 'Save-Data', v: conn.saveData ?? 'Unknown' },
+        { k: 'Connection Type', v: conn.type ?? 'Unknown' },
+        { k: 'Speed Test (Mbps)', v: networkInfo.speed },
+        { k: 'Latency (ms)', v: networkInfo.latency },
+        { k: 'Jitter (ms)', v: networkInfo.jitter }
+      ]);
+      setData('network', {
+        effectiveType: conn.effectiveType,
+        downlink: conn.downlink,
+        rtt: conn.rtt,
+        saveData: conn.saveData,
+        type: conn.type,
+        speed: networkInfo.speed,
+        latency: networkInfo.latency,
+        jitter: networkInfo.jitter
+      });
+
+      // 8) Enhanced Device & System Info
+      const deviceInfo = await getDeviceInfo();
+      addCard('Device & System', [
+        { k: 'Device Type', v: deviceInfo.deviceType },
+        { k: 'Device Model', v: deviceInfo.deviceModel },
+        { k: 'OS Version', v: deviceInfo.osVersion },
+        { k: 'OS Architecture', v: deviceInfo.osArch },
+        { k: 'Device Memory', v: deviceInfo.deviceMemory },
+        { k: 'Max Touch Points', v: deviceInfo.maxTouchPoints },
+        { k: 'Vibration Support', v: deviceInfo.vibrationSupport },
+        { k: 'Bluetooth Support', v: deviceInfo.bluetoothSupport }
+      ]);
+      setData('device', deviceInfo);
+
+      // 9) Performance & Speed
+      const perfInfo = await getPerformanceInfo();
+      addCard('Performance & Speed', [
+        { k: 'Page Load Time (ms)', v: perfInfo.pageLoadTime },
+        { k: 'DOM Ready Time (ms)', v: perfInfo.domReadyTime },
+        { k: 'First Paint (ms)', v: perfInfo.firstPaint },
+        { k: 'First Contentful Paint (ms)', v: perfInfo.firstContentfulPaint },
+        { k: 'Largest Contentful Paint (ms)', v: perfInfo.largestContentfulPaint },
+        { k: 'Cumulative Layout Shift', v: perfInfo.cumulativeLayoutShift },
+        { k: 'Total Blocking Time (ms)', v: perfInfo.totalBlockingTime }
+      ]);
+      setData('performance', perfInfo);
+
+      // 10) File System & Storage
+      const storageInfo = await getStorageInfo();
+      addCard('File System & Storage', [
+        { k: 'IndexedDB Support', v: storageInfo.indexedDB },
+        { k: 'Local Storage', v: storageInfo.localStorage },
+        { k: 'Session Storage', v: storageInfo.sessionStorage },
+        { k: 'Cache Storage', v: storageInfo.cacheStorage },
+        { k: 'File System Access', v: storageInfo.fileSystemAccess },
+        { k: 'WebSQL Support', v: storageInfo.webSQL },
+        { k: 'Storage Quota Used', v: storageInfo.quotaUsed },
+        { k: 'Storage Quota Total', v: storageInfo.quotaTotal }
+      ]);
+      setData('storage', { ...storageInfo, usage: state.data.storage?.usage, quota: state.data.storage?.quota });
+
+      // 11) Enhanced Hardware
+      const enhancedHardware = await getEnhancedHardware();
+      addCard('Enhanced Hardware', [
+        { k: 'CPU Cores', v: cores },
+        { k: 'Approx. RAM', v: mem },
+        { k: 'GPU Vendor', v: gpu.vendor },
+        { k: 'GPU Renderer', v: gpu.renderer },
+        { k: 'Device Orientation', v: enhancedHardware.orientation },
+        { k: 'Device Motion', v: enhancedHardware.motion },
+        { k: 'Ambient Light', v: enhancedHardware.ambientLight },
+        { k: 'Proximity Sensor', v: enhancedHardware.proximity }
+      ]);
+      setData('hardware', { ...state.data.hardware, ...enhancedHardware });
+
+      // 8) Public IP (best-effort, requires internet)
+      await detectIP();
+
+      // 9) Location (auto-detect)
+      await detectLocation();
+
+      toast('Scan complete');
+    }
+
+    async function detectIP() {
+      const targets = [
+        'https://api.ipify.org?format=json',
+        'https://ifconfig.me/all.json',
+        'https://ipinfo.io/json'
+      ];
+      for (const url of targets) {
+        try {
+          const res = await fetch(url, { mode: 'cors' });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const ip = data.ip || data.ip_addr || data.query || null;
+          if (ip) {
+            addCard('Public IP', [{ k: 'Address', v: ip }, { k: 'Source', v: (new URL(url)).host }]);
+            setData('network.publicIP', ip);
+            return;
+          }
+        } catch (e) {/* ignore and try next */ }
+      }
+      addCard('Public IP', [{ k: 'Address', v: 'Unavailable (blocked or offline)' }]);
+    }
+
+    function humanBytes(x) {
+      if (!x && x !== 0) return 'Unknown';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let i = 0; let n = x;
+      while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+      return `${n.toFixed(n < 10 ? 2 : 1)} ${units[i]}`;
+    }
+
+    // Location (opt-in)
+    // Location detection (auto-run)
+    async function detectLocation() {
+      if (!('geolocation' in navigator)) {
+        addCard('Location (GPS)', [{ k: 'Status', v: 'Geolocation not supported' }]);
+        return;
+      }
+
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          });
+        });
+
+        const { latitude, longitude, accuracy, altitude, heading, speed } = position.coords;
+        const ts = new Date(position.timestamp).toISOString();
+
+        addCard('Location (GPS)', [
+          { k: 'Latitude', v: latitude },
+          { k: 'Longitude', v: longitude },
+          { k: 'Accuracy (m)', v: accuracy },
+          { k: 'Altitude', v: altitude ?? 'n/a' },
+          { k: 'Heading', v: heading ?? 'n/a' },
+          { k: 'Speed (m/s)', v: speed ?? 'n/a' },
+          { k: 'Timestamp', v: ts }
+        ]);
+
+        setData('location', { latitude, longitude, accuracy, altitude, heading, speed, timestamp: ts });
+      } catch (err) {
+        addCard('Location (GPS)', [{ k: 'Status', v: `Permission denied or unavailable (${err.code})` }]);
+      }
+    }
+
+    // Copy / Download / Share
+    function toPrettyJSON() { return JSON.stringify(state.data, null, 2); }
+
+    async function copyJSON() {
+      try { await navigator.clipboard.writeText(toPrettyJSON()); toast('Copied JSON'); }
+      catch { toast('Copy failed'); }
+    }
+
+    function downloadJSON() {
+      const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `visitor-info-${Date.now()}.json`;
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    async function share() {
+      const text = toPrettyJSON();
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Visitor Info', text }); }
+        catch { }
+      } else {
+        copyJSON();
+      }
+    }
+
+    async function getEnhancedNetworkInfo(conn) {
+      const result = { speed: 'Unknown', latency: 'Unknown', jitter: 'Unknown' };
+
+      try {
+        // Simple speed test using image download
+        const startTime = performance.now();
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZmZmIi8+PC9zdmc+';
+        });
+        const endTime = performance.now();
+        const downloadTime = endTime - startTime;
+
+        // Estimate speed (rough calculation)
+        const dataSize = 0.0001; // ~100 bytes in MB
+        const speedMbps = (dataSize / (downloadTime / 1000)) * 8;
+        result.speed = speedMbps > 1 ? `${speedMbps.toFixed(2)} Mbps` : `${(speedMbps * 1000).toFixed(2)} Kbps`;
+
+        // Latency test
+        const latencyTests = [];
+        for (let i = 0; i < 5; i++) {
+          const start = performance.now();
+          try {
+            await fetch('data:text/plain,test', { cache: 'no-cache' });
+            const end = performance.now();
+            latencyTests.push(end - start);
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+
+        if (latencyTests.length > 0) {
+          const avgLatency = latencyTests.reduce((a, b) => a + b, 0) / latencyTests.length;
+          result.latency = `${avgLatency.toFixed(1)} ms`;
+
+          // Calculate jitter (standard deviation)
+          const variance = latencyTests.reduce((acc, val) => acc + Math.pow(val - avgLatency, 2), 0) / latencyTests.length;
+          const jitter = Math.sqrt(variance);
+          result.jitter = `${jitter.toFixed(1)} ms`;
+        }
+      } catch (e) {
+        // Fallback to connection API values
+        if (conn.rtt) result.latency = `${conn.rtt} ms`;
+        if (conn.downlink) result.speed = `${conn.downlink} Mbps`;
+      }
+
+      return result;
+    }
+
+    async function getDeviceInfo() {
+      const nav = navigator;
+      const ua = nav.userAgent;
+
+      // Detect device type
+      let deviceType = 'Desktop';
+      if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+        deviceType = 'Mobile';
+      } else if (/Tablet|iPad/i.test(ua)) {
+        deviceType = 'Tablet';
+      }
+
+      // Detect OS version
+      let osVersion = 'Unknown';
+      if (/Windows NT (\d+\.\d+)/.test(ua)) {
+        const match = ua.match(/Windows NT (\d+\.\d+)/);
+        const version = parseFloat(match[1]);
+        if (version === 10.0) osVersion = 'Windows 10/11';
+        else if (version === 6.3) osVersion = 'Windows 8.1';
+        else if (version === 6.2) osVersion = 'Windows 8';
+        else if (version === 6.1) osVersion = 'Windows 7';
+        else osVersion = `Windows ${version}`;
+      } else if (/Mac OS X (\d+[._]\d+)/.test(ua)) {
+        const match = ua.match(/Mac OS X (\d+[._]\d+)/);
+        osVersion = `macOS ${match[1].replace('_', '.')}`;
+      } else if (/Android (\d+\.\d+)/.test(ua)) {
+        const match = ua.match(/Android (\d+\.\d+)/);
+        osVersion = `Android ${match[1]}`;
+      } else if (/iPhone OS (\d+[._]\d+)/.test(ua)) {
+        const match = ua.match(/iPhone OS (\d+[._]\d+)/);
+        osVersion = `iOS ${match[1].replace('_', '.')}`;
+      }
+
+      // Detect OS architecture
+      let osArch = 'Unknown';
+      if (/Win64|WOW64/.test(ua)) osArch = '64-bit';
+      else if (/Win32/.test(ua)) osArch = '32-bit';
+      else if (/Macintosh/.test(ua)) osArch = '64-bit';
+      else if (/Linux x86_64/.test(ua)) osArch = '64-bit';
+      else if (/Linux i[3-6]86/.test(ua)) osArch = '32-bit';
+
+      // Device model detection
+      let deviceModel = 'Unknown';
+      if (/iPhone/.test(ua)) {
+        const match = ua.match(/iPhone OS (\d+[._]\d+)/);
+        if (match) {
+          const version = parseFloat(match[1].replace('_', '.'));
+          if (version >= 14) deviceModel = 'iPhone (Modern)';
+          else if (version >= 12) deviceModel = 'iPhone (Recent)';
+          else deviceModel = 'iPhone (Legacy)';
+        }
+      } else if (/iPad/.test(ua)) {
+        deviceModel = 'iPad';
+      } else if (/Android/.test(ua)) {
+        deviceModel = 'Android Device';
+      } else if (/Macintosh/.test(ua)) {
+        deviceModel = 'Mac';
+      } else if (/Windows/.test(ua)) {
+        deviceModel = 'PC';
+      }
+
+      return {
+        deviceType,
+        deviceModel,
+        osVersion,
+        osArch,
+        deviceMemory: nav.deviceMemory ? `${nav.deviceMemory} GB` : 'Unknown',
+        maxTouchPoints: nav.maxTouchPoints || 'None',
+        vibrationSupport: 'vibrate' in nav ? 'Yes' : 'No',
+        bluetoothSupport: 'bluetooth' in nav ? 'Yes' : 'No'
+      };
+    }
+
+    async function getPerformanceInfo() {
+      const perf = performance;
+      const nav = perf.getEntriesByType('navigation')[0];
+
+      let pageLoadTime = 'Unknown';
+      let domReadyTime = 'Unknown';
+      let firstPaint = 'Unknown';
+      let firstContentfulPaint = 'Unknown';
+      let largestContentfulPaint = 'Unknown';
+      let cumulativeLayoutShift = 'Unknown';
+      let totalBlockingTime = 'Unknown';
+
+      if (nav) {
+        pageLoadTime = `${Math.round(nav.loadEventEnd - nav.loadEventStart)} ms`;
+        domReadyTime = `${Math.round(nav.domContentLoadedEventEnd - nav.domContentLoadedEventStart)} ms`;
+      }
+
+      // Web Vitals
+      try {
+        const paintEntries = perf.getEntriesByType('paint');
+        const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+        if (fcp) firstContentfulPaint = `${Math.round(fcp.startTime)} ms`;
+
+        // First paint (approximation)
+        if (paintEntries.length > 0) {
+          firstPaint = `${Math.round(paintEntries[0].startTime)} ms`;
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+
+      // Largest Contentful Paint
+      try {
+        const observer = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          if (lastEntry) {
+            largestContentfulPaint = `${Math.round(lastEntry.startTime)} ms`;
+          }
+        });
+        observer.observe({ entryTypes: ['largest-contentful-paint'] });
+      } catch (e) {
+        // Ignore errors
+      }
+
+      return {
+        pageLoadTime,
+        domReadyTime,
+        firstPaint,
+        firstContentfulPaint,
+        largestContentfulPaint,
+        cumulativeLayoutShift,
+        totalBlockingTime
+      };
+    }
+
+    async function getStorageInfo() {
+      const result = {
+        indexedDB: 'Unknown',
+        localStorage: 'Unknown',
+        sessionStorage: 'Unknown',
+        cacheStorage: 'Unknown',
+        fileSystemAccess: 'Unknown',
+        webSQL: 'Unknown',
+        quotaUsed: 'Unknown',
+        quotaTotal: 'Unknown'
+      };
+
+      // Test various storage APIs
+      try {
+        result.indexedDB = 'indexedDB' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.indexedDB = 'Blocked';
+      }
+
+      try {
+        result.localStorage = 'localStorage' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.localStorage = 'Blocked';
+      }
+
+      try {
+        result.sessionStorage = 'sessionStorage' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.sessionStorage = 'Blocked';
+      }
+
+      try {
+        result.cacheStorage = 'caches' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.cacheStorage = 'Blocked';
+      }
+
+      try {
+        result.fileSystemAccess = 'showOpenFilePicker' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.fileSystemAccess = 'Not Supported';
+      }
+
+      try {
+        result.webSQL = 'openDatabase' in window ? 'Supported' : 'Not Supported';
+      } catch (e) {
+        result.webSQL = 'Not Supported';
+      }
+
+      // Get storage quota info
+      try {
+        const est = await navigator.storage?.estimate?.();
+        if (est) {
+          result.quotaUsed = humanBytes(est.usage || 0);
+          result.quotaTotal = humanBytes(est.quota || 0);
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+
+      return result;
+    }
+
+    async function getEnhancedHardware() {
+      const result = {
+        orientation: 'Unknown',
+        motion: 'Unknown',
+        ambientLight: 'Unknown',
+        proximity: 'Unknown'
+      };
+
+      // Device orientation
+      try {
+        if ('DeviceOrientationEvent' in window) {
+          result.orientation = 'Supported';
+        } else {
+          result.orientation = 'Not Supported';
+        }
+      } catch (e) {
+        result.orientation = 'Blocked';
+      }
+
+      // Device motion
+      try {
+        if ('DeviceMotionEvent' in window) {
+          result.motion = 'Supported';
+        } else {
+          result.motion = 'Not Supported';
+        }
+      } catch (e) {
+        result.motion = 'Blocked';
+      }
+
+      // Ambient light sensor
+      try {
+        if ('AmbientLightSensor' in window) {
+          result.ambientLight = 'Supported';
+        } else {
+          result.ambientLight = 'Not Supported';
+        }
+      } catch (e) {
+        result.ambientLight = 'Not Supported';
+      }
+
+      // Proximity sensor
+      try {
+        if ('ProximitySensor' in window) {
+          result.proximity = 'Supported';
+        } else {
+          result.proximity = 'Not Supported';
+        }
+      } catch (e) {
+        result.proximity = 'Not Supported';
+      }
+
+      return result;
+    }
+
+
+    // Wire up
+    $('#scanBtn').addEventListener('click', detect);
+    $('#copyBtn').addEventListener('click', copyJSON);
+    $('#downloadBtn').addEventListener('click', downloadJSON);
+    $('#shareBtn').addEventListener('click', share);
+    // Auto-run once for a quick experience
+    // Comment out the next line if you prefer manual
+    // detect();
+
+
+  </script>
+  <script>
+    const canvas = document.getElementById("fireworks");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = Math.random() * 2 + 1;
+        this.color = color;
+        this.speedX = (Math.random() - 0.5) * 6;
+        this.speedY = (Math.random() - 0.5) * 6;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.02 + 0.01;
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.alpha -= this.decay;
+      }
+      draw() {
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    let particles = [];
+
+    function createFirework(x, y) {
+      const colors = ["#ff4040", "#ffcc00", "#00ffcc", "#66ccff", "#ff66ff"];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      for (let i = 0; i < 40; i++) {
+        particles.push(new Particle(x, y, color));
+      }
+    }
+
+    function animate() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      particles = particles.filter(p => p.alpha > 0);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Auto-fire every 1 second
+    setInterval(() => {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height * 0.5; // upper half of screen
+      createFirework(x, y);
+    }, 1000);
+
+  </script>
+</body>
+
+</html>
