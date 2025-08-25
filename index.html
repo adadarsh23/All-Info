@@ -1,284 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<!doctype html>
+<html lang=en>
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Page info -->
-  <title>All-In-One Visitor Info</title>
-  <meta name="description"
-    content="All-in-one visitor info page: fetch device, browser, screen, network, location and optional personal info.">
-  <meta name="author" content="Âd Adarsh">
-  <meta name="keywords"
-    content="visitor info, device info, browser, screen, IP, location, JSON export, fireworks, animation, canvas, particles, interactive, HTML5, JavaScript">
-  <meta name="robots" content="index, follow" />
-
-  <!-- Favicon / Apple Touch Icon using online SVG -->
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/44/44386.png" />
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/44/44386.png" />
-
-  <!-- font -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" as="style">
-  <link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel="stylesheet" media="print"
-    onload="this.media='all'">
-  <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel="stylesheet">
-  </noscript>
-
-
-  <!-- Open Graph / Facebook -->
-  <meta property="og:title" content="All-in-One Visitor Info" />
-  <meta property="og:description"
-    content="Instantly detect your device, browser, screen, network, location and optional personal info with one click." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://all-info.netlify.app/" />
-
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="All-in-One Visitor Info" />
-  <meta name="twitter:description"
-    content="Instantly detect your device, browser, screen, network, location and optional personal info with one click." />
-
-
-  <style defer>
-    :root {
-      --bg: #0b1020;
-      --card: #121a33;
-      --muted: #a9b4d0;
-      --text: #e7ecf6;
-      --accent: #6ea8fe;
-      --ok: #40c057;
-      --warn: #fab005;
-      --err: #fa5252;
-    }
-
-    * {
-      box-sizing: border-box
-    }
-
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-    }
-
-    body {
-      margin: 0;
-      font-family: "Macondo", cursive;
-      font-weight: 400;
-      font-style: normal;
-      background: var(--bg);
-      background-size: cover;
-      background-repeat: no-repeat;
-      color: var(--text, #fff);
-      /* overflow: hidden; */
-      /* prevent scrollbars */
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px
-    }
-
-    /* Fullscreen canvas for fireworks */
-    canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
-      /* don't block clicks */
-    }
-
-    header {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap
-    }
-
-    .brand {
-      font-size: clamp(22px, 3vw, 28px);
-      font-weight: 700;
-      letter-spacing: .3px
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap
-    }
-
-    button {
-      font-family: "Macondo", cursive;
-      font-weight: 400;
-      font-style: normal;
-      cursor: pointer;
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-weight: 600;
-      transition: transform .08s ease, opacity .2s ease;
-      background: var(--accent);
-      color: #051026
-    }
-
-    button.secondary {
-      font-family: "Macondo", cursive;
-      font-weight: 400;
-      font-style: normal;
-      background: #1e2a52;
-      color: var(--text)
-    }
-
-    button.ghost {
-      font-family: "Macondo", cursive;
-      font-weight: 400;
-      font-style: normal;
-      background: transparent;
-      color: var(--text);
-      border: 1px solid #2b3b73
-    }
-
-    button:active {
-      font-family: "Macondo", cursive;
-      font-weight: 400;
-      font-style: normal;
-      transform: translateY(1px)
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 14px;
-      margin-top: 18px
-    }
-
-    .card {
-      background: linear-gradient(180deg, #121a33, #0f1730);
-      border: 1px solid #243165;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(6, 12, 28, .45)
-    }
-
-    .card h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-      color: #c7d3f5
-    }
-
-    .mono {
-      font-family: "Macondo", cursive;
-      font-weight: 400;
-      font-style: normal;
-    }
-
-    .value {
-      word-break: break-word;
-      color: #eef3ff
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 13px
-    }
-
-    .footer {
-      opacity: .8;
-      font-size: 13px;
-      margin-top: 18px
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid #2a3a72;
-      background: #0d1630
-    }
-
-    .ok {
-      color: var(--ok)
-    }
-
-    .warn {
-      color: var(--warn)
-    }
-
-    .err {
-      color: var(--err)
-    }
-
-    .hidden {
-      display: none
-    }
-
-    .toast {
-      position: fixed;
-      right: 16px;
-      bottom: 16px;
-      background: #0f1730;
-      border: 1px solid #243165;
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-size: 14px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
-    }
-
-    .kbd {
-      font-family: "Macondo", cursive;
-      font-weight: 400;
-      font-style: normal;
-      font-size: 12px;
-      background: #0e142a;
-      border: 1px solid #2a3a72;
-      padding: 2px 6px;
-      border-radius: 6px
-    }
-
-    .hero {
-      margin-top: 16px;
-      background: linear-gradient(90deg, rgba(110, 168, 254, .18), transparent);
-      border: 1px solid #243165;
-      padding: 14px;
-      border-radius: 16px
-    }
-
-    a {
-      color: #9ec5ff
-    }
-  </style>
+<meta charset=UTF-8>
+<meta http-equiv=X-UA-Compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>All-In-One Visitor Info</title>
+<meta name=description content="All-in-one visitor info page: fetch device, browser, screen, network, location and optional personal info.">
+<meta name=author content="Âd Adarsh">
+<meta name=keywords content="visitor info, device info, browser, screen, IP, location, JSON export, fireworks, animation, canvas, particles, interactive, HTML5, JavaScript">
+<meta name=robots content="index, follow">
+<link rel=icon href=https://cdn-icons-png.flaticon.com/512/44/44386.png>
+<link rel=apple-touch-icon href=https://cdn-icons-png.flaticon.com/512/44/44386.png>
+<link rel=preload href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" as=style>
+<link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel=stylesheet media=print onload='this.media="all"'>
+<noscript>
+<link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel=stylesheet>
+</noscript>
+<meta property=og:title content="All-in-One Visitor Info">
+<meta property=og:description content="Instantly detect your device, browser, screen, network, location and optional personal info with one click.">
+<meta property=og:type content=website>
+<meta property=og:url content=https://all-info.netlify.app/ >
+<meta name=twitter:card content=summary_large_image>
+<meta name=twitter:title content="All-in-One Visitor Info">
+<meta name=twitter:description content="Instantly detect your device, browser, screen, network, location and optional personal info with one click.">
+<style defer>:root{--bg:#0b1020;--card:#121a33;--muted:#a9b4d0;--text:#e7ecf6;--accent:#6ea8fe;--ok:#40c057;--warn:#fab005;--err:#fa5252}*{box-sizing:border-box}body,html{height:100%;margin:0}body{margin:0;font-family:Macondo,cursive;font-weight:400;font-style:normal;background:var(--bg);background-size:cover;background-repeat:no-repeat;color:var(--text,#fff)}.container{max-width:1100px;margin:0 auto;padding:24px}canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1}header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.brand{font-size:clamp(22px, 3vw, 28px);font-weight:700;letter-spacing:.3px}.actions{display:flex;gap:10px;flex-wrap:wrap}button{font-family:Macondo,cursive;font-weight:400;font-style:normal;cursor:pointer;border:0;border-radius:14px;padding:12px 16px;font-weight:600;transition:transform .08s ease,opacity .2s ease;background:var(--accent);color:#051026}button.secondary{font-family:Macondo,cursive;font-weight:400;font-style:normal;background:#1e2a52;color:var(--text)}button.ghost{font-family:Macondo,cursive;font-weight:400;font-style:normal;background:0 0;color:var(--text);border:1px solid #2b3b73}button:active{font-family:Macondo,cursive;font-weight:400;font-style:normal;transform:translateY(1px)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:18px}.card{background:linear-gradient(180deg,#121a33,#0f1730);border:1px solid #243165;border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(6,12,28,.45)}.card h3{margin:0 0 8px 0;font-size:16px;color:#c7d3f5}.mono{font-family:Macondo,cursive;font-weight:400;font-style:normal}.value{word-break:break-word;color:#eef3ff}.muted{color:var(--muted);font-size:13px}.footer{opacity:.8;font-size:13px;margin-top:18px}.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #2a3a72;background:#0d1630}.ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}.hidden{display:none}.toast{position:fixed;right:16px;bottom:16px;background:#0f1730;border:1px solid #243165;border-radius:14px;padding:10px 14px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.35)}.kbd{font-family:Macondo,cursive;font-weight:400;font-style:normal;font-size:12px;background:#0e142a;border:1px solid #2a3a72;padding:2px 6px;border-radius:6px}.hero{margin-top:16px;background:linear-gradient(90deg,rgba(110,168,254,.18),transparent);border:1px solid #243165;padding:14px;border-radius:16px}a{color:#9ec5ff}</style>
 </head>
-
 <body>
-  <canvas id="fireworks"></canvas>
-  <div class="container">
-    <header>
-      <div class="brand">All-In-One Visitor Info</div>
-      <div class="actions">
-        <button id="scanBtn" class="sendToFormBtn" title="Collect all available info">Show my info</button>
-        <button id="copyBtn" class="ghost" title="Copy JSON to clipboard">Copy JSON</button>
-        <button id="downloadBtn" class="ghost" title="Download JSON file">Download JSON</button>
-        <button id="shareBtn" class="ghost" title="Share using system share sheet">Share</button>
-      </div>
-    </header>
-    <section class="grid" id="cards">
-      <!-- Cards will be injected here -->
-    </section>
-  </div>
-
-  <div id="toast" class="toast hidden"></div>
-
+<canvas id=fireworks></canvas>
+<div class=container>
+<header>
+<div class=brand>All-In-One Visitor Info</div>
+<div class=actions>
+<button id=scanBtn class=sendToFormBtn title="Collect all available info">Show my info</button>
+<button id=copyBtn class=ghost title="Copy JSON to clipboard">Copy JSON</button>
+<button id=downloadBtn class=ghost title="Download JSON file">Download JSON</button>
+<button id=shareBtn class=ghost title="Share using system share sheet">Share</button>
+</div>
+</header>
+<section class=grid id=cards>
+</section>
+</div>
+<div id=toast class="toast hidden"></div>
+</body></html>
   <script defer type="module">
     // Main app script
     document.addEventListener('DOMContentLoaded', function () {
@@ -2346,76 +2109,7 @@
       //detect();
     });
   </script>
-  <script defer type="module">
-    const canvas = document.getElementById("fireworks");
-    const ctx = canvas.getContext("2d");
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    class Particle {
-      constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.radius = Math.random() * 2 + 1;
-        this.color = color;
-        this.speedX = (Math.random() - 0.5) * 6;
-        this.speedY = (Math.random() - 0.5) * 6;
-        this.alpha = 1;
-        this.decay = Math.random() * 0.02 + 0.01;
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.alpha -= this.decay;
-      }
-      draw() {
-        ctx.globalAlpha = this.alpha;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    let particles = [];
-
-    function createFirework(x, y) {
-      const colors = ["#ff4040", "#ffcc00", "#00ffcc", "#66ccff", "#ff66ff"];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      for (let i = 0; i < 40; i++) {
-        particles.push(new Particle(x, y, color));
-      }
-    }
-
-    function animate() {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      particles = particles.filter(p => p.alpha > 0);
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
-
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    // Auto-fire every 1 second
-    setInterval(() => {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height * 0.5; // upper half of screen
-      createFirework(x, y);
-    }, 1000);
-
-  </script>
+  <script defer type=module>const canvas=document.getElementById("fireworks"),ctx=canvas.getContext("2d");function resizeCanvas(){canvas.width=window.innerWidth,canvas.height=window.innerHeight}window.addEventListener("resize",resizeCanvas),resizeCanvas();class Particle{constructor(t,a,e){this.x=t,this.y=a,this.radius=2*Math.random()+1,this.color=e,this.speedX=6*(Math.random()-.5),this.speedY=6*(Math.random()-.5),this.alpha=1,this.decay=.02*Math.random()+.01}update(){this.x+=this.speedX,this.y+=this.speedY,this.alpha-=this.decay}draw(){ctx.globalAlpha=this.alpha,ctx.beginPath(),ctx.arc(this.x,this.y,this.radius,0,2*Math.PI),ctx.fillStyle=this.color,ctx.fill(),ctx.globalAlpha=1}}let particles=[];function createFirework(t,a){const e=["#ff4040","#ffcc00","#00ffcc","#66ccff","#ff66ff"],i=e[Math.floor(Math.random()*e.length)];for(let e=0;e<40;e++)particles.push(new Particle(t,a,i))}function animate(){ctx.fillStyle="rgba(0, 0, 0, 0.2)",ctx.fillRect(0,0,canvas.width,canvas.height),particles=particles.filter((t=>t.alpha>0)),particles.forEach((t=>{t.update(),t.draw()})),requestAnimationFrame(animate)}animate(),setInterval((()=>{createFirework(Math.random()*canvas.width,Math.random()*canvas.height*.5)}),1e3)</script>
 </body>
 
 </html>
