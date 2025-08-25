@@ -297,6 +297,9 @@
         card.appendChild(h);
         rows.forEach(r => {
           const p = document.createElement('div');
+          if (r.data) {
+            p.setAttribute(`data-${r.data}`, '');
+          }
           p.innerHTML = `<div class="muted">${r.k}</div><div class="value mono">${escapeHTML(String(r.v))}</div>`
           card.appendChild(p);
         });
@@ -624,17 +627,17 @@
         addCard('Display', [
           { k: 'Screen Resolution', v: `${screenW}×${screenH}` },
           { k: 'Available Screen', v: `${availW}×${availH}` },
-          { k: 'Viewport Size', v: inner },
+          { k: 'Viewport Size', v: inner, data: 'viewport-size' },
           { k: 'Device Pixel Ratio', v: dpr },
           { k: 'Color Depth', v: `${screen.colorDepth} bit` },
           { k: 'Color Gamut', v: screen.colorGamut || 'Unknown' },
-          { k: 'Screen Orientation', v: orientationType },
-          { k: 'Orientation Angle', v: orientationAngle },
+          { k: 'Screen Orientation', v: orientationType, data: 'orientation-type' },
+          { k: 'Orientation Angle', v: orientationAngle, data: 'orientation-angle' },
           { k: 'Physical Resolution', v: `${physicalWidth}×${physicalHeight}` },
           { k: 'Logical Resolution', v: `${logicalWidth}×${logicalHeight}` },
           { k: 'Screen Position', v: `Left: ${screenLeft}, Top: ${screenTop}` },
-          { k: 'Document Scroll Size', v: `${scrollWidth}×${scrollHeight}` },
-          { k: 'Document Client Size', v: `${clientWidth}×${clientHeight}` },
+          { k: 'Document Scroll Size', v: `${scrollWidth}×${scrollHeight}`, data: 'scroll-size' },
+          { k: 'Document Client Size', v: `${clientWidth}×${clientHeight}`, data: 'client-size' },
           { k: 'Preferred Color Scheme', v: colorScheme },
           { k: 'Reduced Motion Preferred', v: reducedMotion },
           { k: 'High Contrast Preferred', v: highContrast },
@@ -1109,8 +1112,8 @@
           const estimatedCapacity = isMobile ? '3000-5000 mAh' : 'Unknown';
 
           addCard('Battery', [
-            { k: 'Battery Level', v: level },
-            { k: 'Battery Status', v: batteryStatus },
+            { k: 'Battery Level', v: level, data: 'battery-level' },
+            { k: 'Battery Status', v: batteryStatus, data: 'battery-status' },
             { k: 'Charging State', v: charging ? 'Yes' : 'No' },
             { k: 'Battery Health', v: batteryHealth },
             { k: 'Estimated Voltage', v: `${batteryVoltage.toFixed(1)}V` },
@@ -1231,10 +1234,10 @@
 
         addCard('Network', [
           { k: 'Connection Type', v: networkType },
-          { k: 'Effective Type', v: effectiveType },
+          { k: 'Effective Type', v: effectiveType, data: 'effective-type' },
           { k: 'Network Technology', v: networkTechnology },
-          { k: 'Downlink Speed', v: `${downlink} Mbps` },
-          { k: 'Round Trip Time', v: `${rtt} ms` },
+          { k: 'Downlink Speed', v: `${downlink} Mbps`, data: 'downlink' },
+          { k: 'Round Trip Time', v: `${rtt} ms`, data: 'rtt' },
           { k: 'Save Data Mode', v: saveData ? 'Enabled' : 'Disabled' },
           { k: 'Network Quality', v: networkQuality },
           { k: 'Reliability Score', v: `${reliabilityScore}/100` },
@@ -1483,7 +1486,9 @@
           { k: 'First Contentful Paint (ms)', v: perfInfo.firstContentfulPaint },
           { k: 'Largest Contentful Paint (ms)', v: perfInfo.largestContentfulPaint },
           { k: 'Cumulative Layout Shift', v: perfInfo.cumulativeLayoutShift },
-          { k: 'Total Blocking Time (ms)', v: perfInfo.totalBlockingTime }
+          { k: 'Total Blocking Time (ms)', v: perfInfo.totalBlockingTime },
+          { k: 'First Input Delay (ms)', v: perfInfo.firstInputDelay },
+          { k: 'Interaction to Next Paint (ms)', v: perfInfo.interactionToNextPaint }
         ]);
         setData('performance', perfInfo);
 
@@ -1796,29 +1801,7 @@
         URL.revokeObjectURL(url);
       }
 
-      // async function share() {
-      //   const text = toPrettyJSON();
-      //   if (navigator.share) {
-      //     try {
-      //       await navigator.share({ title: 'Visitor Info', text });
-      //     }
-      //     catch { }
-      //   } else {
-      //     copyJSON();
-      //   }
-      // }
-      async function share() {
-        const text = toPrettyJSON();
-        if (navigator.share) {
-          try {
-            await navigator.share({ title: 'Visitor Info', text });
-          }
-          catch { }
-          // Silent failure - user doesn't know what happened
-        } else {
-          copyJSON(); // Fallback to copy
-        }
-      }
+
 
       async function getEnhancedNetworkInfo(conn) {
         const result = { speed: 'Unknown', latency: 'Unknown', jitter: 'Unknown' };
@@ -1946,58 +1929,111 @@
 
       async function getPerformanceInfo() {
         const perf = performance;
-        const nav = perf.getEntriesByType('navigation')[0];
+        const nav = perf.getEntriesByType("navigation")[0];
 
-        let pageLoadTime = 'Unknown';
-        let domReadyTime = 'Unknown';
-        let firstPaint = 'Unknown';
-        let firstContentfulPaint = 'Unknown';
-        let largestContentfulPaint = 'Unknown';
-        let cumulativeLayoutShift = 'Unknown';
-        let totalBlockingTime = 'Unknown';
+        // Defaults
+        let pageLoadTime = "Unknown";
+        let domReadyTime = "Unknown";
+        let firstPaint = "Unknown";
+        let firstContentfulPaint = "Unknown";
+        let largestContentfulPaint = "Unknown";
+        let cumulativeLayoutShift = "Unknown";
+        let totalBlockingTime = "Unknown";
+        let firstInputDelay = "Unknown";
+        let interactionToNextPaint = "Unknown";
 
+        // Navigation timings
         if (nav) {
-          pageLoadTime = `${Math.round(nav.loadEventEnd - nav.loadEventStart)} ms`;
-          domReadyTime = `${Math.round(nav.domContentLoadedEventEnd - nav.domContentLoadedEventStart)} ms`;
+          pageLoadTime = `${Math.round(nav.loadEventEnd - nav.startTime)} ms`;
+          domReadyTime = `${Math.round(nav.domContentLoadedEventEnd - nav.startTime)} ms`;
         }
 
-        // Web Vitals
+        // Paint timings
         try {
-          const paintEntries = perf.getEntriesByType('paint');
-          const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+          const paintEntries = perf.getEntriesByType("paint");
+          const fcp = paintEntries.find(e => e.name === "first-contentful-paint");
           if (fcp) firstContentfulPaint = `${Math.round(fcp.startTime)} ms`;
 
-          // First paint (approximation)
-          if (paintEntries.length > 0) {
-            firstPaint = `${Math.round(paintEntries[0].startTime)} ms`;
-          }
-        } catch (e) {
-          // Ignore errors
-        }
+          const fp = paintEntries.find(e => e.name === "first-paint");
+          if (fp) firstPaint = `${Math.round(fp.startTime)} ms`;
+        } catch (e) { }
 
         // Largest Contentful Paint
         try {
-          const observer = new PerformanceObserver((list) => {
+          const lcpObserver = new PerformanceObserver((list) => {
             const entries = list.getEntries();
             const lastEntry = entries[entries.length - 1];
             if (lastEntry) {
               largestContentfulPaint = `${Math.round(lastEntry.startTime)} ms`;
             }
           });
-          observer.observe({ entryTypes: ['largest-contentful-paint'] });
-        } catch (e) {
-          // Ignore errors
-        }
+          lcpObserver.observe({ type: "largest-contentful-paint", buffered: true });
+        } catch (e) { }
 
-        return {
-          pageLoadTime,
-          domReadyTime,
-          firstPaint,
-          firstContentfulPaint,
-          largestContentfulPaint,
-          cumulativeLayoutShift,
-          totalBlockingTime
-        };
+        // Cumulative Layout Shift
+        try {
+          let clsValue = 0;
+          const clsObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+              if (!entry.hadRecentInput) {
+                clsValue += entry.value;
+              }
+            }
+            cumulativeLayoutShift = clsValue.toFixed(3);
+          });
+          clsObserver.observe({ type: "layout-shift", buffered: true });
+        } catch (e) { }
+
+        // First Input Delay
+        try {
+          const fidObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+              firstInputDelay = `${Math.round(entry.processingStart - entry.startTime)} ms`;
+            }
+          });
+          fidObserver.observe({ type: "first-input", buffered: true });
+        } catch (e) { }
+
+        // Interaction to Next Paint (INP)
+        try {
+          const inpObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+              interactionToNextPaint = `${Math.round(entry.duration)} ms`;
+            }
+          });
+          inpObserver.observe({ type: "event", buffered: true, durationThreshold: 40 });
+        } catch (e) { }
+
+        // Total Blocking Time
+        try {
+          let tbt = 0;
+          const tbtObserver = new PerformanceObserver((list) => {
+            list.getEntries().forEach((entry) => {
+              if (entry.duration > 50) {
+                tbt += entry.duration - 50;
+              }
+            });
+            totalBlockingTime = `${Math.round(tbt)} ms`;
+          });
+          tbtObserver.observe({ type: "longtask", buffered: true });
+        } catch (e) { }
+
+        // Wait 3 seconds for observers to capture data
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              pageLoadTime,
+              domReadyTime,
+              firstPaint,
+              firstContentfulPaint,
+              largestContentfulPaint,
+              cumulativeLayoutShift,
+              totalBlockingTime,
+              firstInputDelay,
+              interactionToNextPaint
+            });
+          }, 3000);
+        });
       }
 
       async function getStorageInfo() {
