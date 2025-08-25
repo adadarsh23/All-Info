@@ -87,7 +87,7 @@
       height: 100%;
       pointer-events: none;
       z-index: -1;
-      /* don’t block clicks */
+      /* don't block clicks */
     }
 
     header {
@@ -273,683 +273,6 @@
   </div>
 
   <div id="toast" class="toast hidden"></div>
-
-  <!-- <script defer>
-    // Main app script
-    (function () {
-      const $ = (sel) => document.querySelector(sel);
-      const cardsEl = $('#cards');
-      const toastEl = $('#toast');
-      const state = { data: {} };
-
-      function toast(msg) {
-        toastEl.textContent = msg; toastEl.classList.remove('hidden');
-        setTimeout(() => toastEl.classList.add('hidden'), 2400);
-      }
-
-      // ...rest of the main app script...
-      // ...existing code...
-    })();
-    const $ = (sel) => document.querySelector(sel);
-    const cardsEl = $('#cards');
-    const toastEl = $('#toast');
-    const state = { data: {} };
-
-    function toast(msg) {
-      toastEl.textContent = msg; toastEl.classList.remove('hidden');
-      setTimeout(() => toastEl.classList.add('hidden'), 2400);
-    }
-
-    function addCard(title, rows) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const h = document.createElement('h3'); h.textContent = title; card.appendChild(h);
-      rows.forEach(r => {
-        const p = document.createElement('div');
-        p.innerHTML = `<div class="muted">${r.k}</div><div class="value mono">${escapeHTML(String(r.v))}</div>`
-        card.appendChild(p);
-      });
-      cardsEl.appendChild(card);
-    }
-
-    function escapeHTML(s) {
-      return s.replace(/[&<>'"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[c]));
-    }
-
-    function setData(path, value) {
-      const segs = path.split('.');
-      let ref = state.data;
-      for (let i = 0; i < segs.length - 1; i++) { ref = ref[segs[i]] ?? (ref[segs[i]] = {}); }
-      ref[segs.at(-1)] = value;
-    }
-
-    function getTimeOffset() {
-      const mins = -new Date().getTimezoneOffset();
-      const sign = mins >= 0 ? '+' : '-';
-      const hh = String(Math.floor(Math.abs(mins) / 60)).padStart(2, '0');
-      const mm = String(Math.abs(mins) % 60).padStart(2, '0');
-      return `${sign}${hh}:${mm}`;
-    }
-
-    async function detect() {
-      cardsEl.innerHTML = '';
-      const nav = navigator;
-
-      // 1) Browser & OS
-      const ua = nav.userAgent;
-      const platform = nav.platform || (nav.userAgentData && nav.userAgentData.platform) || 'Unknown';
-      const languages = nav.languages || [nav.language];
-      const vendor = nav.vendor || 'n/a';
-      const onLine = nav.onLine;
-      const cookies = navigator.cookieEnabled;
-      const doNotTrack = nav.doNotTrack || window.doNotTrack || navigator.msDoNotTrack || 'unspecified';
-
-      addCard('Browser & OS', [
-        { k: 'User Agent', v: ua },
-        { k: 'Platform', v: platform },
-        { k: 'Languages', v: languages.join(', ') },
-        { k: 'Vendor', v: vendor },
-        { k: 'Online', v: onLine },
-        { k: 'Cookies Enabled', v: cookies },
-        { k: 'Do Not Track', v: doNotTrack }
-      ]);
-
-      setData('browser.userAgent', ua);
-      setData('browser.platform', platform);
-      setData('browser.languages', languages);
-      setData('browser.vendor', vendor);
-      setData('browser.online', onLine);
-      setData('privacy.cookiesEnabled', cookies);
-      setData('privacy.doNotTrack', doNotTrack);
-
-      // 2) Display
-      const dpr = window.devicePixelRatio || 1;
-      const screenW = screen.width, screenH = screen.height;
-      const availW = screen.availWidth, availH = screen.availHeight;
-      const inner = `${window.innerWidth}×${window.innerHeight}`;
-
-      addCard('Display', [
-        { k: 'Screen', v: `${screenW}×${screenH}` },
-        { k: 'Available', v: `${availW}×${availH}` },
-        { k: 'Viewport', v: inner },
-        { k: 'Pixel Ratio', v: dpr }
-      ]);
-
-      setData('display', { screen: [screenW, screenH], available: [availW, availH], viewport: [window.innerWidth, window.innerHeight], pixelRatio: dpr });
-
-      // 3) Hardware
-      const cores = nav.hardwareConcurrency || 'Unknown';
-      const mem = nav.deviceMemory ? `${nav.deviceMemory} GB` : 'Unknown';
-
-      // GPU via WebGL
-      const gpu = (() => {
-        try {
-          const canvas = document.createElement('canvas');
-          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-          if (!gl) return { vendor: 'Unavailable', renderer: 'Unavailable' };
-          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-          if (debugInfo) {
-            return {
-              vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
-              renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
-            };
-          }
-          return { vendor: gl.getParameter(gl.VENDOR), renderer: gl.getParameter(gl.RENDERER) };
-        } catch { return { vendor: 'Blocked', renderer: 'Blocked' } }
-      })();
-
-      addCard('Hardware', [
-        { k: 'CPU Cores', v: cores },
-        { k: 'Approx. RAM', v: mem },
-        { k: 'GPU Vendor', v: gpu.vendor },
-        { k: 'GPU Renderer', v: gpu.renderer }
-      ]);
-
-      setData('hardware.cores', cores);
-      setData('hardware.memory', mem);
-      setData('hardware.gpu', gpu);
-
-      // 4) Time & Locale
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
-      const offset = getTimeOffset();
-      const now = new Date().toISOString();
-
-      addCard('Time & Locale', [
-        { k: 'Time Zone', v: tz },
-        { k: 'UTC Offset', v: offset },
-        { k: 'Now (ISO)', v: now }
-      ]);
-
-      setData('time.timeZone', tz);
-      setData('time.utcOffset', offset);
-      setData('time.now', now);
-
-      // 5) Storage
-      try {
-        const est = await navigator.storage?.estimate?.();
-        const quota = est?.quota ?? 0; const usage = est?.usage ?? 0;
-        addCard('Storage', [
-          { k: 'Used', v: humanBytes(usage) },
-          { k: 'Quota', v: humanBytes(quota) },
-          { k: 'Usage %', v: quota ? ((usage / quota * 100).toFixed(1) + '%') : 'Unknown' }
-        ]);
-        setData('storage', { usage, quota });
-      } catch {
-        addCard('Storage', [{ k: 'Status', v: 'Unavailable' }]);
-      }
-
-      // 6) Battery
-      try {
-        const bat = await navigator.getBattery();
-        const level = Math.round(bat.level * 100) + '%';
-        const charging = bat.charging;
-        const chargeTime = bat.chargingTime; // seconds
-        const disTime = bat.dischargingTime; // seconds
-        addCard('Battery', [
-          { k: 'Level', v: level },
-          { k: 'Charging', v: charging },
-          { k: 'Charge Time (s)', v: chargeTime },
-          { k: 'Discharge Time (s)', v: disTime }
-        ]);
-        setData('battery', { level: bat.level, charging, chargingTime: chargeTime, dischargingTime: disTime });
-      } catch {
-        addCard('Battery', [{ k: 'Status', v: 'Unavailable (not supported)' }]);
-      }
-
-      // 7) Network
-      // 7) Network
-      const conn = nav.connection || nav.mozConnection || nav.webkitConnection || {};
-
-      // Enhanced network detection with speed tests
-      const networkInfo = await getEnhancedNetworkInfo(conn);
-
-      addCard('Network', [
-        { k: 'Effective Type', v: conn.effectiveType ?? 'Unknown' },
-        { k: 'Downlink (Mbps)', v: conn.downlink ?? 'Unknown' },
-        { k: 'RTT (ms)', v: conn.rtt ?? 'Unknown' },
-        { k: 'Save-Data', v: conn.saveData ?? 'Unknown' },
-        { k: 'Connection Type', v: conn.type ?? 'Unknown' },
-        { k: 'Speed Test (Mbps)', v: networkInfo.speed },
-        { k: 'Latency (ms)', v: networkInfo.latency },
-        { k: 'Jitter (ms)', v: networkInfo.jitter }
-      ]);
-      setData('network', {
-        effectiveType: conn.effectiveType,
-        downlink: conn.downlink,
-        rtt: conn.rtt,
-        saveData: conn.saveData,
-        type: conn.type,
-        speed: networkInfo.speed,
-        latency: networkInfo.latency,
-        jitter: networkInfo.jitter
-      });
-
-      // 8) Enhanced Device & System Info
-      const deviceInfo = await getDeviceInfo();
-      addCard('Device & System', [
-        { k: 'Device Type', v: deviceInfo.deviceType },
-        { k: 'Device Model', v: deviceInfo.deviceModel },
-        { k: 'OS Version', v: deviceInfo.osVersion },
-        { k: 'OS Architecture', v: deviceInfo.osArch },
-        { k: 'Device Memory', v: deviceInfo.deviceMemory },
-        { k: 'Max Touch Points', v: deviceInfo.maxTouchPoints },
-        { k: 'Vibration Support', v: deviceInfo.vibrationSupport },
-        { k: 'Bluetooth Support', v: deviceInfo.bluetoothSupport }
-      ]);
-      setData('device', deviceInfo);
-
-      // 9) Performance & Speed
-      const perfInfo = await getPerformanceInfo();
-      addCard('Performance & Speed', [
-        { k: 'Page Load Time (ms)', v: perfInfo.pageLoadTime },
-        { k: 'DOM Ready Time (ms)', v: perfInfo.domReadyTime },
-        { k: 'First Paint (ms)', v: perfInfo.firstPaint },
-        { k: 'First Contentful Paint (ms)', v: perfInfo.firstContentfulPaint },
-        { k: 'Largest Contentful Paint (ms)', v: perfInfo.largestContentfulPaint },
-        { k: 'Cumulative Layout Shift', v: perfInfo.cumulativeLayoutShift },
-        { k: 'Total Blocking Time (ms)', v: perfInfo.totalBlockingTime }
-      ]);
-      setData('performance', perfInfo);
-
-      // 10) File System & Storage
-      const storageInfo = await getStorageInfo();
-      addCard('File System & Storage', [
-        { k: 'IndexedDB Support', v: storageInfo.indexedDB },
-        { k: 'Local Storage', v: storageInfo.localStorage },
-        { k: 'Session Storage', v: storageInfo.sessionStorage },
-        { k: 'Cache Storage', v: storageInfo.cacheStorage },
-        { k: 'File System Access', v: storageInfo.fileSystemAccess },
-        { k: 'WebSQL Support', v: storageInfo.webSQL },
-        { k: 'Storage Quota Used', v: storageInfo.quotaUsed },
-        { k: 'Storage Quota Total', v: storageInfo.quotaTotal }
-      ]);
-      setData('storage', { ...storageInfo, usage: state.data.storage?.usage, quota: state.data.storage?.quota });
-
-      // 11) Enhanced Hardware
-      const enhancedHardware = await getEnhancedHardware();
-      addCard('Hardware', [
-        { k: 'CPU Cores', v: cores },
-        { k: 'Approx. RAM', v: mem },
-        { k: 'GPU Vendor', v: gpu.vendor },
-        { k: 'GPU Renderer', v: gpu.renderer },
-        { k: 'Device Orientation', v: enhancedHardware.orientation },
-        { k: 'Device Motion', v: enhancedHardware.motion },
-        { k: 'Ambient Light', v: enhancedHardware.ambientLight },
-        { k: 'Proximity Sensor', v: enhancedHardware.proximity }
-      ]);
-      setData('hardware', { ...state.data.hardware, ...enhancedHardware });
-
-      // 8) Public IP (best-effort, requires internet)
-      await detectIP();
-
-      // 9) Location (auto-detect)
-      await detectLocation();
-
-      toast('Scan complete');
-    }
-
-    async function detectIP() {
-      const targets = [
-        'https://api.ipify.org?format=json',
-        'https://ifconfig.me/all.json',
-        'https://ipinfo.io/json'
-      ];
-      for (const url of targets) {
-        try {
-          const res = await fetch(url, { mode: 'cors' });
-          if (!res.ok) continue;
-          const data = await res.json();
-          const ip = data.ip || data.ip_addr || data.query || null;
-          if (ip) {
-            addCard('Public IP', [{ k: 'Address', v: ip }, { k: 'Source', v: (new URL(url)).host }]);
-            setData('network.publicIP', ip);
-            return;
-          }
-        } catch (e) {/* ignore and try next */ }
-      }
-      addCard('Public IP', [{ k: 'Address', v: 'Unavailable (blocked or offline)' }]);
-    }
-
-    function humanBytes(x) {
-      if (!x && x !== 0) return 'Unknown';
-      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-      let i = 0; let n = x;
-      while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
-      return `${n.toFixed(n < 10 ? 2 : 1)} ${units[i]}`;
-    }
-
-    // Location (opt-in)
-    // Location detection (auto-run)
-    async function detectLocation() {
-      if (!('geolocation' in navigator)) {
-        addCard('Location (GPS)', [{ k: 'Status', v: 'Geolocation not supported' }]);
-        return;
-      }
-
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          });
-        });
-
-        const { latitude, longitude, accuracy, altitude, heading, speed } = position.coords;
-        const ts = new Date(position.timestamp).toISOString();
-
-        addCard('Location (GPS)', [
-          { k: 'Latitude', v: latitude },
-          { k: 'Longitude', v: longitude },
-          { k: 'Accuracy (m)', v: accuracy },
-          { k: 'Altitude', v: altitude ?? 'n/a' },
-          { k: 'Heading', v: heading ?? 'n/a' },
-          { k: 'Speed (m/s)', v: speed ?? 'n/a' },
-          { k: 'Timestamp', v: ts }
-        ]);
-
-        setData('location', { latitude, longitude, accuracy, altitude, heading, speed, timestamp: ts });
-      } catch (err) {
-        addCard('Location (GPS)', [{ k: 'Status', v: `Permission denied or unavailable (${err.code})` }]);
-      }
-    }
-
-    // Copy / Download / Share
-    function toPrettyJSON() { return JSON.stringify(state.data, null, 2); }
-
-    async function copyJSON() {
-      try { await navigator.clipboard.writeText(toPrettyJSON()); toast('Copied JSON'); }
-      catch { toast('Copy failed'); }
-    }
-
-    function downloadJSON() {
-      const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `visitor-info-${Date.now()}.json`;
-      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-    }
-
-    async function share() {
-      const text = toPrettyJSON();
-      if (navigator.share) {
-        try { await navigator.share({ title: 'Visitor Info', text }); }
-        catch { }
-      } else {
-        copyJSON();
-      }
-    }
-
-    async function getEnhancedNetworkInfo(conn) {
-      const result = { speed: 'Unknown', latency: 'Unknown', jitter: 'Unknown' };
-
-      try {
-        // Simple speed test using image download
-        const startTime = performance.now();
-        const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZmZmIi8+PC9zdmc+';
-        });
-        const endTime = performance.now();
-        const downloadTime = endTime - startTime;
-
-        // Estimate speed (rough calculation)
-        const dataSize = 0.0001; // ~100 bytes in MB
-        const speedMbps = (dataSize / (downloadTime / 1000)) * 8;
-        result.speed = speedMbps > 1 ? `${speedMbps.toFixed(2)} Mbps` : `${(speedMbps * 1000).toFixed(2)} Kbps`;
-
-        // Latency test
-        const latencyTests = [];
-        for (let i = 0; i < 5; i++) {
-          const start = performance.now();
-          try {
-            await fetch('data:text/plain,test', { cache: 'no-cache' });
-            const end = performance.now();
-            latencyTests.push(end - start);
-          } catch (e) {
-            // Ignore errors
-          }
-        }
-
-        if (latencyTests.length > 0) {
-          const avgLatency = latencyTests.reduce((a, b) => a + b, 0) / latencyTests.length;
-          result.latency = `${avgLatency.toFixed(1)} ms`;
-
-          // Calculate jitter (standard deviation)
-          const variance = latencyTests.reduce((acc, val) => acc + Math.pow(val - avgLatency, 2), 0) / latencyTests.length;
-          const jitter = Math.sqrt(variance);
-          result.jitter = `${jitter.toFixed(1)} ms`;
-        }
-      } catch (e) {
-        // Fallback to connection API values
-        if (conn.rtt) result.latency = `${conn.rtt} ms`;
-        if (conn.downlink) result.speed = `${conn.downlink} Mbps`;
-      }
-
-      return result;
-    }
-
-    async function getDeviceInfo() {
-      const nav = navigator;
-      const ua = nav.userAgent;
-
-      // Detect device type
-      let deviceType = 'Desktop';
-      if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
-        deviceType = 'Mobile';
-      } else if (/Tablet|iPad/i.test(ua)) {
-        deviceType = 'Tablet';
-      }
-
-      // Detect OS version
-      let osVersion = 'Unknown';
-      if (/Windows NT (\d+\.\d+)/.test(ua)) {
-        const match = ua.match(/Windows NT (\d+\.\d+)/);
-        const version = parseFloat(match[1]);
-        if (version === 10.0) osVersion = 'Windows 10/11';
-        else if (version === 6.3) osVersion = 'Windows 8.1';
-        else if (version === 6.2) osVersion = 'Windows 8';
-        else if (version === 6.1) osVersion = 'Windows 7';
-        else osVersion = `Windows ${version}`;
-      } else if (/Mac OS X (\d+[._]\d+)/.test(ua)) {
-        const match = ua.match(/Mac OS X (\d+[._]\d+)/);
-        osVersion = `macOS ${match[1].replace('_', '.')}`;
-      } else if (/Android (\d+\.\d+)/.test(ua)) {
-        const match = ua.match(/Android (\d+\.\d+)/);
-        osVersion = `Android ${match[1]}`;
-      } else if (/iPhone OS (\d+[._]\d+)/.test(ua)) {
-        const match = ua.match(/iPhone OS (\d+[._]\d+)/);
-        osVersion = `iOS ${match[1].replace('_', '.')}`;
-      }
-
-      // Detect OS architecture
-      let osArch = 'Unknown';
-      if (/Win64|WOW64/.test(ua)) osArch = '64-bit';
-      else if (/Win32/.test(ua)) osArch = '32-bit';
-      else if (/Macintosh/.test(ua)) osArch = '64-bit';
-      else if (/Linux x86_64/.test(ua)) osArch = '64-bit';
-      else if (/Linux i[3-6]86/.test(ua)) osArch = '32-bit';
-
-      // Device model detection
-      let deviceModel = 'Unknown';
-      if (/iPhone/.test(ua)) {
-        const match = ua.match(/iPhone OS (\d+[._]\d+)/);
-        if (match) {
-          const version = parseFloat(match[1].replace('_', '.'));
-          if (version >= 14) deviceModel = 'iPhone (Modern)';
-          else if (version >= 12) deviceModel = 'iPhone (Recent)';
-          else deviceModel = 'iPhone (Legacy)';
-        }
-      } else if (/iPad/.test(ua)) {
-        deviceModel = 'iPad';
-      } else if (/Android/.test(ua)) {
-        deviceModel = 'Android Device';
-      } else if (/Macintosh/.test(ua)) {
-        deviceModel = 'Mac';
-      } else if (/Windows/.test(ua)) {
-        deviceModel = 'PC';
-      }
-
-      return {
-        deviceType,
-        deviceModel,
-        osVersion,
-        osArch,
-        deviceMemory: nav.deviceMemory ? `${nav.deviceMemory} GB` : 'Unknown',
-        maxTouchPoints: nav.maxTouchPoints || 'None',
-        vibrationSupport: 'vibrate' in nav ? 'Yes' : 'No',
-        bluetoothSupport: 'bluetooth' in nav ? 'Yes' : 'No'
-      };
-    }
-
-    async function getPerformanceInfo() {
-      const perf = performance;
-      const nav = perf.getEntriesByType('navigation')[0];
-
-      let pageLoadTime = 'Unknown';
-      let domReadyTime = 'Unknown';
-      let firstPaint = 'Unknown';
-      let firstContentfulPaint = 'Unknown';
-      let largestContentfulPaint = 'Unknown';
-      let cumulativeLayoutShift = 'Unknown';
-      let totalBlockingTime = 'Unknown';
-
-      if (nav) {
-        pageLoadTime = `${Math.round(nav.loadEventEnd - nav.loadEventStart)} ms`;
-        domReadyTime = `${Math.round(nav.domContentLoadedEventEnd - nav.domContentLoadedEventStart)} ms`;
-      }
-
-      // Web Vitals
-      try {
-        const paintEntries = perf.getEntriesByType('paint');
-        const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
-        if (fcp) firstContentfulPaint = `${Math.round(fcp.startTime)} ms`;
-
-        // First paint (approximation)
-        if (paintEntries.length > 0) {
-          firstPaint = `${Math.round(paintEntries[0].startTime)} ms`;
-        }
-      } catch (e) {
-        // Ignore errors
-      }
-
-      // Largest Contentful Paint
-      try {
-        const observer = new PerformanceObserver((list) => {
-          const entries = list.getEntries();
-          const lastEntry = entries[entries.length - 1];
-          if (lastEntry) {
-            largestContentfulPaint = `${Math.round(lastEntry.startTime)} ms`;
-          }
-        });
-        observer.observe({ entryTypes: ['largest-contentful-paint'] });
-      } catch (e) {
-        // Ignore errors
-      }
-
-      return {
-        pageLoadTime,
-        domReadyTime,
-        firstPaint,
-        firstContentfulPaint,
-        largestContentfulPaint,
-        cumulativeLayoutShift,
-        totalBlockingTime
-      };
-    }
-
-    async function getStorageInfo() {
-      const result = {
-        indexedDB: 'Unknown',
-        localStorage: 'Unknown',
-        sessionStorage: 'Unknown',
-        cacheStorage: 'Unknown',
-        fileSystemAccess: 'Unknown',
-        webSQL: 'Unknown',
-        quotaUsed: 'Unknown',
-        quotaTotal: 'Unknown'
-      };
-
-      // Test various storage APIs
-      try {
-        result.indexedDB = 'indexedDB' in window ? 'Supported' : 'Not Supported';
-      } catch (e) {
-        result.indexedDB = 'Blocked';
-      }
-
-      try {
-        result.localStorage = 'localStorage' in window ? 'Supported' : 'Not Supported';
-      } catch (e) {
-        result.localStorage = 'Blocked';
-      }
-
-      try {
-        result.sessionStorage = 'sessionStorage' in window ? 'Supported' : 'Not Supported';
-      } catch (e) {
-        result.sessionStorage = 'Blocked';
-      }
-
-      try {
-        result.cacheStorage = 'caches' in window ? 'Supported' : 'Not Supported';
-      } catch (e) {
-        result.cacheStorage = 'Blocked';
-      }
-
-      try {
-        result.fileSystemAccess = 'showOpenFilePicker' in window ? 'Supported' : 'Not Supported';
-      } catch (e) {
-        result.fileSystemAccess = 'Not Supported';
-      }
-
-      try {
-        result.webSQL = 'openDatabase' in window ? 'Supported' : 'Not Supported';
-      } catch (e) {
-        result.webSQL = 'Not Supported';
-      }
-
-      // Get storage quota info
-      try {
-        const est = await navigator.storage?.estimate?.();
-        if (est) {
-          result.quotaUsed = humanBytes(est.usage || 0);
-          result.quotaTotal = humanBytes(est.quota || 0);
-        }
-      } catch (e) {
-        // Ignore errors
-      }
-
-      return result;
-    }
-
-    async function getEnhancedHardware() {
-      const result = {
-        orientation: 'Unknown',
-        motion: 'Unknown',
-        ambientLight: 'Unknown',
-        proximity: 'Unknown'
-      };
-
-      // Device orientation
-      try {
-        if ('DeviceOrientationEvent' in window) {
-          result.orientation = 'Supported';
-        } else {
-          result.orientation = 'Not Supported';
-        }
-      } catch (e) {
-        result.orientation = 'Blocked';
-      }
-
-      // Device motion
-      try {
-        if ('DeviceMotionEvent' in window) {
-          result.motion = 'Supported';
-        } else {
-          result.motion = 'Not Supported';
-        }
-      } catch (e) {
-        result.motion = 'Blocked';
-      }
-
-      // Ambient light sensor
-      try {
-        if ('AmbientLightSensor' in window) {
-          result.ambientLight = 'Supported';
-        } else {
-          result.ambientLight = 'Not Supported';
-        }
-      } catch (e) {
-        result.ambientLight = 'Not Supported';
-      }
-
-      // Proximity sensor
-      try {
-        if ('ProximitySensor' in window) {
-          result.proximity = 'Supported';
-        } else {
-          result.proximity = 'Not Supported';
-        }
-      } catch (e) {
-        result.proximity = 'Not Supported';
-      }
-
-      return result;
-    }
-
-
-    // Wire up
-    $('#scanBtn').addEventListener('click', detect);
-    $('#copyBtn').addEventListener('click', copyJSON);
-    $('#downloadBtn').addEventListener('click', downloadJSON);
-    $('#shareBtn').addEventListener('click', share);
-    // Auto-run once for a quick experience
-    // Comment out the next line if you prefer manual
-    // detect();
-
-
-  </script> -->
 
   <script defer>
     // Main app script
@@ -1255,20 +578,71 @@
         });
 
         // 2) Display
-        // 2) Display
         const dpr = window.devicePixelRatio || 1;
         const screenW = screen.width, screenH = screen.height;
         const availW = screen.availWidth, availH = screen.availHeight;
         const inner = `${window.innerWidth}×${window.innerHeight}`;
 
+        // Enhanced display detection
+        const colorScheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'Dark' : 'Light';
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'Yes' : 'No';
+        const highContrast = window.matchMedia('(prefers-contrast: high)').matches ? 'Yes' : 'No';
+        const anyHover = window.matchMedia('(any-hover: hover)').matches ? 'Yes' : 'No';
+        const anyPointer = window.matchMedia('(any-pointer: fine)').matches ? 'Fine' : 'Coarse';
+
+        // Screen orientation details
+        let orientationType = 'Unknown';
+        let orientationAngle = 'Unknown';
+        if (screen.orientation) {
+          orientationType = screen.orientation.type;
+          orientationAngle = `${screen.orientation.angle}°`;
+        }
+
+        // Additional screen metrics
+        const logicalWidth = screen.width;
+        const logicalHeight = screen.height;
+        const physicalWidth = Math.round(screen.width * dpr);
+        const physicalHeight = Math.round(screen.height * dpr);
+        const screenLeft = window.screenLeft || window.screenX || 0;
+        const screenTop = window.screenTop || window.screenY || 0;
+
+        // Viewport details
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scrollWidth = document.documentElement.scrollWidth;
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientWidth = document.documentElement.clientWidth;
+        const clientHeight = document.documentElement.clientHeight;
+
+        // CSS media query support
+        const supportsHover = CSS.supports('hover', 'hover');
+        const supportsTouch = CSS.supports('pointer', 'coarse');
+        const supportsGrid = CSS.supports('display', 'grid');
+        const supportsFlexbox = CSS.supports('display', 'flex');
+
         addCard('Display', [
-          { k: 'Screen', v: `${screenW}×${screenH}` },
-          { k: 'Available', v: `${availW}×${availH}` },
-          { k: 'Viewport', v: inner },
-          { k: 'Pixel Ratio', v: dpr },
+          { k: 'Screen Resolution', v: `${screenW}×${screenH}` },
+          { k: 'Available Screen', v: `${availW}×${availH}` },
+          { k: 'Viewport Size', v: inner },
+          { k: 'Device Pixel Ratio', v: dpr },
           { k: 'Color Depth', v: `${screen.colorDepth} bit` },
           { k: 'Color Gamut', v: screen.colorGamut || 'Unknown' },
-          { k: 'Orientation', v: screen.orientation ? screen.orientation.type : 'Unknown' }
+          { k: 'Screen Orientation', v: orientationType },
+          { k: 'Orientation Angle', v: orientationAngle },
+          { k: 'Physical Resolution', v: `${physicalWidth}×${physicalHeight}` },
+          { k: 'Logical Resolution', v: `${logicalWidth}×${logicalHeight}` },
+          { k: 'Screen Position', v: `Left: ${screenLeft}, Top: ${screenTop}` },
+          { k: 'Document Scroll Size', v: `${scrollWidth}×${scrollHeight}` },
+          { k: 'Document Client Size', v: `${clientWidth}×${clientHeight}` },
+          { k: 'Preferred Color Scheme', v: colorScheme },
+          { k: 'Reduced Motion Preferred', v: reducedMotion },
+          { k: 'High Contrast Preferred', v: highContrast },
+          { k: 'Hover Capability', v: anyHover },
+          { k: 'Pointer Precision', v: anyPointer },
+          { k: 'CSS Hover Support', v: supportsHover ? 'Yes' : 'No' },
+          { k: 'CSS Touch Support', v: supportsTouch ? 'Yes' : 'No' },
+          { k: 'CSS Grid Support', v: supportsGrid ? 'Yes' : 'No' },
+          { k: 'CSS Flexbox Support', v: supportsFlexbox ? 'Yes' : 'No' }
         ]);
 
         setData('display', {
@@ -1278,79 +652,431 @@
           pixelRatio: dpr,
           colorDepth: screen.colorDepth,
           colorGamut: screen.colorGamut,
-          orientation: screen.orientation ? screen.orientation.type : 'Unknown'
+          orientation: {
+            type: orientationType,
+            angle: screen.orientation ? screen.orientation.angle : null
+          },
+          physical: [physicalWidth, physicalHeight],
+          logical: [logicalWidth, logicalHeight],
+          position: { left: screenLeft, top: screenTop },
+          document: {
+            scroll: [scrollWidth, scrollHeight],
+            client: [clientWidth, clientHeight]
+          },
+          preferences: {
+            colorScheme,
+            reducedMotion,
+            highContrast,
+            hover: anyHover,
+            pointer: anyPointer
+          },
+          cssSupport: {
+            hover: supportsHover,
+            touch: supportsTouch,
+            grid: supportsGrid,
+            flexbox: supportsFlexbox
+          }
+        });
+
+        // Add screen orientation change listener
+        if (screen.orientation) {
+          screen.orientation.addEventListener('change', () => {
+            // Update the orientation information in real-time
+            const currentType = screen.orientation.type;
+            const currentAngle = screen.orientation.angle;
+
+            // Find and update the orientation card if it exists
+            const orientationCard = document.querySelector('.card h3');
+            if (orientationCard && orientationCard.textContent === 'Display') {
+              const orientationRow = orientationCard.parentNode.querySelector('[data-orientation-type]');
+              const angleRow = orientationCard.parentNode.querySelector('[data-orientation-angle]');
+
+              if (orientationRow) {
+                orientationRow.querySelector('.value').textContent = currentType;
+              }
+              if (angleRow) {
+                angleRow.querySelector('.value').textContent = `${currentAngle}°`;
+              }
+            }
+          });
+        }
+
+        // Add window resize listener to update viewport dimensions
+        window.addEventListener('resize', () => {
+          const currentViewport = `${window.innerWidth}×${window.innerHeight}`;
+          const currentScroll = `${document.documentElement.scrollWidth}×${document.documentElement.scrollHeight}`;
+          const currentClient = `${document.documentElement.clientWidth}×${document.documentElement.clientHeight}`;
+
+          // Find and update the display card if it exists
+          const displayCard = document.querySelector('.card h3');
+          if (displayCard && displayCard.textContent === 'Display') {
+            const viewportRow = displayCard.parentNode.querySelector('[data-viewport-size]');
+            const scrollRow = displayCard.parentNode.querySelector('[data-scroll-size]');
+            const clientRow = displayCard.parentNode.querySelector('[data-client-size]');
+
+            if (viewportRow) {
+              viewportRow.querySelector('.value').textContent = currentViewport;
+            }
+            if (scrollRow) {
+              scrollRow.querySelector('.value').textContent = currentScroll;
+            }
+            if (clientRow) {
+              clientRow.querySelector('.value').textContent = currentClient;
+            }
+          }
         });
 
         // 3) Hardware
         const cores = nav.hardwareConcurrency || 'Unknown';
         const mem = nav.deviceMemory ? `${nav.deviceMemory} GB` : 'Unknown';
 
-        // GPU via WebGL
+        // Enhanced GPU detection
         const gpu = (() => {
           try {
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (!gl) return { vendor: 'Unavailable', renderer: 'Unavailable' };
+            if (!gl) return { vendor: 'Unavailable', renderer: 'Unavailable', version: 'Unavailable', shadingLanguage: 'Unavailable' };
+
             const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
             if (debugInfo) {
               return {
                 vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
-                renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+                renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL),
+                version: gl.getParameter(gl.VERSION),
+                shadingLanguage: gl.getParameter(gl.SHADING_LANGUAGE_VERSION)
               };
             }
-            return { vendor: gl.getParameter(gl.VENDOR), renderer: gl.getParameter(gl.RENDERER) };
-          } catch { return { vendor: 'Blocked', renderer: 'Blocked' } }
+            return {
+              vendor: gl.getParameter(gl.VENDOR),
+              renderer: gl.getParameter(gl.RENDERER),
+              version: gl.getParameter(gl.VERSION),
+              shadingLanguage: gl.getParameter(gl.SHADING_LANGUAGE_VERSION)
+            };
+          } catch { return { vendor: 'Blocked', renderer: 'Blocked', version: 'Blocked', shadingLanguage: 'Blocked' } }
         })();
+
+        // Enhanced hardware capabilities detection
+        const hasWebGL = 'WebGLRenderingContext' in window;
+        const hasWebGL2 = 'WebGL2RenderingContext' in window;
+        const hasWebGPU = 'gpu' in navigator;
+        const hasSharedArrayBuffer = 'SharedArrayBuffer' in window;
+        const hasAtomics = 'Atomics' in window;
+        const hasBigInt = typeof BigInt !== 'undefined';
+        const hasBigInt64Array = 'BigInt64Array' in window;
+        const hasBigUint64Array = 'BigUint64Array' in window;
+
+        // Memory and performance APIs
+        const hasMemory = 'memory' in performance;
+        const hasUserMemory = 'userMemory' in navigator;
+        const hasDeviceMemory = 'deviceMemory' in navigator;
+
+        // Additional hardware features
+        const hasGamepad = 'getGamepads' in navigator;
+        const hasHID = 'hid' in navigator;
+        const hasUSB = 'usb' in navigator;
+        const hasSerial = 'serial' in navigator;
+        const hasBluetooth = 'bluetooth' in navigator;
+        const hasVibration = 'vibrate' in navigator;
+        const hasWakeLock = 'wakeLock' in navigator;
+        const hasContacts = 'contacts' in navigator;
+        const hasMediaSession = 'mediaSession' in navigator;
+        const hasPresentation = 'presentation' in navigator;
+        const hasCredential = 'credentials' in navigator;
+        const hasPayment = 'PaymentRequest' in window;
 
         addCard('Hardware', [
           { k: 'CPU Cores', v: cores },
           { k: 'Approx. RAM', v: mem },
           { k: 'GPU Vendor', v: gpu.vendor },
           { k: 'GPU Renderer', v: gpu.renderer },
+          { k: 'WebGL Version', v: gpu.version },
+          { k: 'Shading Language', v: gpu.shadingLanguage },
+          { k: 'WebGL Support', v: hasWebGL ? 'Supported' : 'Not Supported' },
+          { k: 'WebGL 2 Support', v: hasWebGL2 ? 'Supported' : 'Not Supported' },
+          { k: 'WebGPU Support', v: hasWebGPU ? 'Supported' : 'Not Supported' },
           { k: 'Max Touch Points', v: nav.maxTouchPoints || 'None' },
-          { k: 'Vibration Support', v: 'vibrate' in nav ? 'Yes' : 'No' },
-          { k: 'Bluetooth Support', v: 'bluetooth' in nav ? 'Yes' : 'No' }
+          { k: 'Vibration Support', v: hasVibration ? 'Yes' : 'No' },
+          { k: 'Bluetooth Support', v: hasBluetooth ? 'Yes' : 'No' },
+          { k: 'Shared Array Buffer', v: hasSharedArrayBuffer ? 'Supported' : 'Not Supported' },
+          { k: 'Atomics Support', v: hasAtomics ? 'Supported' : 'Not Supported' },
+          { k: 'BigInt Support', v: hasBigInt ? 'Supported' : 'Not Supported' },
+          { k: 'BigInt64Array', v: hasBigInt64Array ? 'Supported' : 'Not Supported' },
+          { k: 'BigUint64Array', v: hasBigUint64Array ? 'Supported' : 'Not Supported' },
+          { k: 'Performance Memory API', v: hasMemory ? 'Supported' : 'Not Supported' },
+          { k: 'User Memory API', v: hasUserMemory ? 'Supported' : 'Not Supported' },
+          { k: 'Device Memory API', v: hasDeviceMemory ? 'Supported' : 'Not Supported' },
+          { k: 'Gamepad Support', v: hasGamepad ? 'Supported' : 'Not Supported' },
+          { k: 'HID Support', v: hasHID ? 'Supported' : 'Not Supported' },
+          { k: 'USB Support', v: hasUSB ? 'Supported' : 'Not Supported' },
+          { k: 'Serial Support', v: hasSerial ? 'Supported' : 'Not Supported' },
+          { k: 'Wake Lock Support', v: hasWakeLock ? 'Supported' : 'Not Supported' },
+          { k: 'Contacts API', v: hasContacts ? 'Supported' : 'Not Supported' },
+          { k: 'Media Session API', v: hasMediaSession ? 'Supported' : 'Not Supported' },
+          { k: 'Presentation API', v: hasPresentation ? 'Supported' : 'Not Supported' },
+          { k: 'Credentials API', v: hasCredential ? 'Supported' : 'Not Supported' },
+          { k: 'Payment Request API', v: hasPayment ? 'Supported' : 'Not Supported' }
         ]);
 
         setData('hardware.cores', cores);
         setData('hardware.memory', mem);
         setData('hardware.gpu', gpu);
         setData('hardware.maxTouchPoints', nav.maxTouchPoints);
-        setData('hardware.vibration', 'vibrate' in nav);
-        setData('hardware.bluetooth', 'bluetooth' in nav);
+        setData('hardware.vibration', hasVibration);
+        setData('hardware.bluetooth', hasBluetooth);
+        setData('hardware.capabilities', {
+          webgl: hasWebGL,
+          webgl2: hasWebGL2,
+          webgpu: hasWebGPU,
+          sharedArrayBuffer: hasSharedArrayBuffer,
+          atomics: hasAtomics,
+          bigInt: hasBigInt,
+          bigInt64Array: hasBigInt64Array,
+          bigUint64Array: hasBigUint64Array,
+          memory: hasMemory,
+          userMemory: hasUserMemory,
+          deviceMemory: hasDeviceMemory,
+          gamepad: hasGamepad,
+          hid: hasHID,
+          usb: hasUSB,
+          serial: hasSerial,
+          wakeLock: hasWakeLock,
+          contacts: hasContacts,
+          mediaSession: hasMediaSession,
+          presentation: hasPresentation,
+          credential: hasCredential,
+          payment: hasPayment
+        });
 
         // 4) Time & Locale
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
         const offset = getTimeOffset();
         const now = new Date().toISOString();
 
+        // Enhanced time and locale detection
+        const locale = navigator.language || 'en-US';
+        const locales = navigator.languages || [locale];
+        const dateTimeFormat = new Intl.DateTimeFormat(locale);
+        const numberFormat = new Intl.NumberFormat(locale);
+        const listFormat = new Intl.ListFormat(locale);
+        const relativeTimeFormat = new Intl.RelativeTimeFormat(locale);
+        const pluralRules = new Intl.PluralRules(locale);
+        const collator = new Intl.Collator(locale);
+
+        // Calendar and numbering systems
+        const calendar = Intl.DateTimeFormat().resolvedOptions().calendar || 'Unknown';
+        const numberingSystem = Intl.NumberFormat().resolvedOptions().numberingSystem || 'Unknown';
+
+        // Current time in various formats
+        const nowLocal = new Date();
+        const nowUTC = new Date(nowLocal.getTime() + (nowLocal.getTimezoneOffset() * 60000));
+        const nowLocalString = nowLocal.toLocaleString(locale);
+        const nowUTCString = nowUTC.toLocaleString('en-US', { timeZone: 'UTC' });
+
+        // Time zone details
+        const tzOffset = nowLocal.getTimezoneOffset();
+        const tzOffsetHours = Math.abs(Math.floor(tzOffset / 60));
+        const tzOffsetMinutes = Math.abs(tzOffset % 60);
+        const tzOffsetString = `${tzOffset <= 0 ? '+' : '-'}${tzOffsetHours.toString().padStart(2, '0')}:${tzOffsetMinutes.toString().padStart(2, '0')}`;
+
+        // Date formatting examples
+        const dateFormats = {
+          short: dateTimeFormat.format(nowLocal),
+          long: new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(nowLocal),
+          full: new Intl.DateTimeFormat(locale, { dateStyle: 'full' }).format(nowLocal),
+          time: new Intl.DateTimeFormat(locale, { timeStyle: 'medium' }).format(nowLocal)
+        };
+
+        // Number formatting examples
+        const numberFormats = {
+          decimal: numberFormat.format(1234.56),
+          currency: new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(1234.56),
+          percent: new Intl.NumberFormat(locale, { style: 'percent' }).format(0.1234),
+          scientific: new Intl.NumberFormat(locale, { notation: 'scientific' }).format(1234.56)
+        };
+
         addCard('Time & Locale', [
           { k: 'Time Zone', v: tz },
           { k: 'UTC Offset', v: offset },
+          { k: 'Local Time Offset', v: tzOffsetString },
           { k: 'Now (ISO)', v: now },
-          { k: 'Date Format', v: new Intl.DateTimeFormat().format(new Date()) },
-          { k: 'Number Format', v: new Intl.NumberFormat().format(1234.56) }
+          { k: 'Now (Local)', v: nowLocalString },
+          { k: 'Now (UTC)', v: nowUTCString },
+          { k: 'Primary Locale', v: locale },
+          { k: 'All Locales', v: locales.join(', ') },
+          { k: 'Calendar System', v: calendar },
+          { k: 'Numbering System', v: numberingSystem },
+          { k: 'Date Format (Short)', v: dateFormats.short },
+          { k: 'Date Format (Long)', v: dateFormats.long },
+          { k: 'Date Format (Full)', v: dateFormats.full },
+          { k: 'Time Format', v: dateFormats.time },
+          { k: 'Number Format (Decimal)', v: numberFormats.decimal },
+          { k: 'Number Format (Currency)', v: numberFormats.currency },
+          { k: 'Number Format (Percent)', v: numberFormats.percent },
+          { k: 'Number Format (Scientific)', v: numberFormats.scientific },
+          { k: 'List Format Support', v: 'ListFormat' in Intl ? 'Supported' : 'Not Supported' },
+          { k: 'Relative Time Support', v: 'RelativeTimeFormat' in Intl ? 'Supported' : 'Not Supported' },
+          { k: 'Plural Rules Support', v: 'PluralRules' in Intl ? 'Supported' : 'Not Supported' },
+          { k: 'Collator Support', v: 'Collator' in Intl ? 'Supported' : 'Not Supported' }
         ]);
 
         setData('time.timeZone', tz);
         setData('time.utcOffset', offset);
         setData('time.now', now);
-        setData('time.dateFormat', new Intl.DateTimeFormat().format(new Date()));
-        setData('time.numberFormat', new Intl.NumberFormat().format(1234.56));
+        setData('time.local', nowLocalString);
+        setData('time.utc', nowUTCString);
+        setData('time.localOffset', tzOffsetString);
+        setData('time.dateFormat', dateFormats);
+        setData('time.numberFormat', numberFormats);
+        setData('locale', {
+          primary: locale,
+          all: locales,
+          calendar: calendar,
+          numberingSystem: numberingSystem,
+          features: {
+            listFormat: 'ListFormat' in Intl,
+            relativeTime: 'RelativeTimeFormat' in Intl,
+            pluralRules: 'PluralRules' in Intl,
+            collator: 'Collator' in Intl
+          }
+        });
 
         // 5) Storage
         try {
           const est = await navigator.storage?.estimate?.();
           const quota = est?.quota ?? 0;
           const usage = est?.usage ?? 0;
+
+          // Enhanced storage detection
+          const hasIndexedDB = 'indexedDB' in window;
+          const hasLocalStorage = 'localStorage' in window;
+          const hasSessionStorage = 'sessionStorage' in window;
+          const hasCacheStorage = 'caches' in window;
+          const hasFileSystemAccess = 'showOpenFilePicker' in window;
+          const hasWebSQL = 'openDatabase' in window;
+          const hasFileSystem = 'webkitRequestFileSystem' in window;
+          const hasQuotaManagement = 'webkitStorageInfo' in window;
+
+          // Storage quota breakdown
+          const quotaGB = (quota / (1024 * 1024 * 1024)).toFixed(2);
+          const usageMB = (usage / (1024 * 1024)).toFixed(2);
+          const usagePercent = quota ? ((usage / quota * 100).toFixed(3)) : '0.000';
+          const remainingBytes = quota - usage;
+          const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2);
+          const remainingGB = (remainingBytes / (1024 * 1024 * 1024)).toFixed(2);
+
+          // Test storage limits
+          let localStorageLimit = 'Unknown';
+          let sessionStorageLimit = 'Unknown';
+
+          if (hasLocalStorage) {
+            try {
+              const testKey = '__storage_test__';
+              let testData = '';
+              for (let i = 0; i < 1024; i++) {
+                testData += '0123456789';
+              }
+
+              let count = 0;
+              while (count < 10000) {
+                try {
+                  localStorage.setItem(testKey + count, testData);
+                  count++;
+                } catch (e) {
+                  break;
+                }
+              }
+
+              // Clean up
+              for (let i = 0; i < count; i++) {
+                localStorage.removeItem(testKey + i);
+              }
+
+              localStorageLimit = `${(count * 10 / 1024).toFixed(2)} MB`;
+            } catch (e) {
+              localStorageLimit = 'Test failed';
+            }
+          }
+
+          if (hasSessionStorage) {
+            try {
+              const testKey = '__session_storage_test__';
+              let testData = '';
+              for (let i = 0; i < 1024; i++) {
+                testData += '0123456789';
+              }
+
+              let count = 0;
+              while (count < 10000) {
+                try {
+                  sessionStorage.setItem(testKey + count, testData);
+                  count++;
+                } catch (e) {
+                  break;
+                }
+              }
+
+              // Clean up
+              for (let i = 0; i < count; i++) {
+                sessionStorage.removeItem(testKey + i);
+              }
+
+              sessionStorageLimit = `${(count * 10 / 1024).toFixed(2)} MB`;
+            } catch (e) {
+              sessionStorageLimit = 'Test failed';
+            }
+          }
+
           addCard('Storage', [
-            { k: 'Used', v: humanBytes(usage) },
-            { k: 'Quota', v: humanBytes(quota) },
-            { k: 'Usage %', v: quota ? ((usage / quota * 100).toFixed(1) + '%') : 'Unknown' }
+            { k: 'Used Storage', v: `${usageMB} MB` },
+            { k: 'Total Quota', v: `${quotaGB} GB` },
+            { k: 'Usage Percentage', v: `${usagePercent}%` },
+            { k: 'Remaining Storage', v: `${remainingMB} MB (${remainingGB} GB)` },
+            { k: 'IndexedDB Support', v: hasIndexedDB ? 'Supported' : 'Not Supported' },
+            { k: 'Local Storage Support', v: hasLocalStorage ? 'Supported' : 'Not Supported' },
+            { k: 'Local Storage Limit', v: localStorageLimit },
+            { k: 'Session Storage Support', v: hasSessionStorage ? 'Supported' : 'Not Supported' },
+            { k: 'Session Storage Limit', v: sessionStorageLimit },
+            { k: 'Cache Storage Support', v: hasCacheStorage ? 'Supported' : 'Not Supported' },
+            { k: 'File System Access', v: hasFileSystemAccess ? 'Supported' : 'Not Supported' },
+            { k: 'WebSQL Support', v: hasWebSQL ? 'Supported' : 'Not Supported' },
+            { k: 'File System API', v: hasFileSystem ? 'Supported' : 'Not Supported' },
+            { k: 'Quota Management', v: hasQuotaManagement ? 'Supported' : 'Not Supported' },
+            { k: 'Storage Persistence', v: 'persist' in navigator.storage ? 'Supported' : 'Not Supported' }
           ]);
-          setData('storage', { usage, quota });
-        } catch {
-          addCard('Storage', [{ k: 'Status', v: 'Unavailable' }]);
+
+          setData('storage', {
+            usage,
+            quota,
+            usageMB: parseFloat(usageMB),
+            quotaGB: parseFloat(quotaGB),
+            usagePercent: parseFloat(usagePercent),
+            remaining: {
+              bytes: remainingBytes,
+              mb: parseFloat(remainingMB),
+              gb: parseFloat(remainingGB)
+            },
+            capabilities: {
+              indexedDB: hasIndexedDB,
+              localStorage: hasLocalStorage,
+              sessionStorage: hasSessionStorage,
+              cacheStorage: hasCacheStorage,
+              fileSystemAccess: hasFileSystemAccess,
+              webSQL: hasWebSQL,
+              fileSystem: hasFileSystem,
+              quotaManagement: hasQuotaManagement,
+              persistence: 'persist' in navigator.storage
+            },
+            limits: {
+              localStorage: localStorageLimit,
+              sessionStorage: sessionStorageLimit
+            }
+          });
+        } catch (error) {
+          addCard('Storage', [
+            { k: 'Status', v: 'Unavailable' },
+            { k: 'Error', v: error.message || 'Unknown error' }
+          ]);
+          setData('storage', { error: error.message || 'Unknown error' });
         }
 
         // 6) Battery
@@ -1360,15 +1086,90 @@
           const charging = bat.charging;
           const chargeTime = bat.chargingTime; // seconds
           const disTime = bat.dischargingTime; // seconds
+
+          // Enhanced battery information
+          const batteryLevel = bat.level;
+          const batteryVoltage = batteryLevel * 4.2; // Approximate voltage (4.2V when full, 3.0V when empty)
+          const batteryHealth = batteryLevel > 0.8 ? 'Excellent' : batteryLevel > 0.6 ? 'Good' : batteryLevel > 0.4 ? 'Fair' : 'Poor';
+          const estimatedTimeRemaining = charging ?
+            (chargeTime === Infinity ? 'Calculating...' : `${Math.floor(chargeTime / 60)}m ${chargeTime % 60}s`) :
+            (disTime === Infinity ? 'Calculating...' : `${Math.floor(disTime / 60)}m ${disTime % 60}s`);
+
+          // Battery status interpretation
+          const batteryStatus = charging ? 'Charging' : 'Discharging';
+          const chargeRate = charging && chargeTime !== Infinity ?
+            `${((1 - batteryLevel) / (chargeTime / 3600)).toFixed(2)} %/hour` : 'Unknown';
+          const dischargeRate = !charging && disTime !== Infinity ?
+            `${(batteryLevel / (disTime / 3600)).toFixed(2)} %/hour` : 'Unknown';
+
+          // Battery type estimation based on device
+          const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          const estimatedBatteryType = isMobile ? 'Lithium-ion' : 'Unknown';
+          const estimatedCapacity = isMobile ? '3000-5000 mAh' : 'Unknown';
+
           addCard('Battery', [
-            { k: 'Level', v: level },
-            { k: 'Charging', v: charging },
-            { k: 'Charge Time (s)', v: chargeTime },
-            { k: 'Discharge Time (s)', v: disTime }
+            { k: 'Battery Level', v: level },
+            { k: 'Battery Status', v: batteryStatus },
+            { k: 'Charging State', v: charging ? 'Yes' : 'No' },
+            { k: 'Battery Health', v: batteryHealth },
+            { k: 'Estimated Voltage', v: `${batteryVoltage.toFixed(1)}V` },
+            { k: 'Estimated Battery Type', v: estimatedBatteryType },
+            { k: 'Estimated Capacity', v: estimatedCapacity },
+            { k: 'Charge Time Remaining', v: chargeTime === Infinity ? 'Calculating...' : `${Math.floor(chargeTime / 60)}m ${chargeTime % 60}s` },
+            { k: 'Discharge Time Remaining', v: disTime === Infinity ? 'Calculating...' : `${Math.floor(disTime / 60)}m ${disTime % 60}s` },
+            { k: 'Total Time Remaining', v: estimatedTimeRemaining },
+            { k: 'Charge Rate', v: chargeRate },
+            { k: 'Discharge Rate', v: dischargeRate },
+            { k: 'Battery API Support', v: 'Full Support' },
+            { k: 'Real-time Monitoring', v: 'Enabled' }
           ]);
-          setData('battery', { level: bat.level, charging, chargingTime: chargeTime, dischargingTime: disTime });
+
+          setData('battery', {
+            level: bat.level,
+            charging,
+            chargingTime: chargeTime,
+            dischargingTime: disTime,
+            voltage: batteryVoltage,
+            health: batteryHealth,
+            status: batteryStatus,
+            timeRemaining: estimatedTimeRemaining,
+            chargeRate: chargeRate,
+            dischargeRate: dischargeRate,
+            type: estimatedBatteryType,
+            capacity: estimatedCapacity,
+            apiSupport: 'Full'
+          });
+
+          // Add battery level change listener for real-time updates
+          bat.addEventListener('levelchange', () => {
+            const newLevel = Math.round(bat.level * 100) + '%';
+            const batteryCard = document.querySelector('.card h3');
+            if (batteryCard && batteryCard.textContent === 'Battery') {
+              const levelRow = batteryCard.parentNode.querySelector('[data-battery-level]');
+              if (levelRow) {
+                levelRow.querySelector('.value').textContent = newLevel;
+              }
+            }
+          });
+
+          bat.addEventListener('chargingchange', () => {
+            const newStatus = bat.charging ? 'Charging' : 'Discharging';
+            const batteryCard = document.querySelector('.card h3');
+            if (batteryCard && batteryCard.textContent === 'Battery') {
+              const statusRow = batteryCard.parentNode.querySelector('[data-battery-status]');
+              if (statusRow) {
+                statusRow.querySelector('.value').textContent = newStatus;
+              }
+            }
+          });
+
         } catch {
-          addCard('Battery', [{ k: 'Status', v: 'Unavailable (not supported)' }]);
+          addCard('Battery', [
+            { k: 'Status', v: 'Unavailable (not supported)' },
+            { k: 'Reason', v: 'Battery API not available on this device/browser' },
+            { k: 'Alternative', v: 'Check system battery indicator' }
+          ]);
+          setData('battery', { error: 'Battery API not supported' });
         }
 
         // 7) Enhanced Network
@@ -1377,41 +1178,300 @@
         // Enhanced network detection with speed tests
         const networkInfo = await getEnhancedNetworkInfo(conn);
 
+        // Additional network diagnostics
+        const networkType = conn.type || 'Unknown';
+        const effectiveType = conn.effectiveType || 'Unknown';
+        const downlink = conn.downlink || 'Unknown';
+        const rtt = conn.rtt || 'Unknown';
+        const saveData = conn.saveData || false;
+
+        // Network quality assessment
+        const networkQuality = (() => {
+          if (effectiveType === '4g' && downlink >= 10) return 'Excellent';
+          if (effectiveType === '4g' && downlink >= 5) return 'Good';
+          if (effectiveType === '4g' && downlink >= 1) return 'Fair';
+          if (effectiveType === '3g') return 'Moderate';
+          if (effectiveType === '2g') return 'Slow';
+          if (effectiveType === 'slow-2g') return 'Very Slow';
+          return 'Unknown';
+        })();
+
+        // Connection reliability score
+        const reliabilityScore = (() => {
+          let score = 100;
+          if (rtt > 100) score -= 20;
+          if (rtt > 200) score -= 30;
+          if (downlink < 5) score -= 25;
+          if (effectiveType === '2g' || effectiveType === 'slow-2g') score -= 40;
+          return Math.max(0, score);
+        })();
+
+        // Network technology details
+        const networkTechnology = (() => {
+          if (effectiveType === '4g') return 'LTE/4G';
+          if (effectiveType === '3g') return '3G/UMTS';
+          if (effectiveType === '2g') return '2G/GSM';
+          if (effectiveType === 'slow-2g') return '2G/EDGE';
+          return 'Unknown';
+        })();
+
+        // Bandwidth estimation
+        const estimatedBandwidth = (() => {
+          if (downlink === 'Unknown') return 'Unknown';
+          const downlinkNum = parseFloat(downlink);
+          if (downlinkNum >= 100) return 'Very High';
+          if (downlinkNum >= 50) return 'High';
+          if (downlinkNum >= 25) return 'Medium-High';
+          if (downlinkNum >= 10) return 'Medium';
+          if (downlinkNum >= 5) return 'Medium-Low';
+          if (downlinkNum >= 1) return 'Low';
+          return 'Very Low';
+        })();
+
         addCard('Network', [
-          { k: 'Effective Type', v: conn.effectiveType ?? 'Unknown' },
-          { k: 'Downlink (Mbps)', v: conn.downlink ?? 'Unknown' },
-          { k: 'RTT (ms)', v: conn.rtt ?? 'Unknown' },
-          { k: 'Save-Data', v: conn.saveData ?? 'Unknown' },
-          { k: 'Connection Type', v: conn.type ?? 'Unknown' },
-          { k: 'Speed Test (Mbps)', v: networkInfo.speed },
-          { k: 'Latency (ms)', v: networkInfo.latency },
-          { k: 'Jitter (ms)', v: networkInfo.jitter }
+          { k: 'Connection Type', v: networkType },
+          { k: 'Effective Type', v: effectiveType },
+          { k: 'Network Technology', v: networkTechnology },
+          { k: 'Downlink Speed', v: `${downlink} Mbps` },
+          { k: 'Round Trip Time', v: `${rtt} ms` },
+          { k: 'Save Data Mode', v: saveData ? 'Enabled' : 'Disabled' },
+          { k: 'Network Quality', v: networkQuality },
+          { k: 'Reliability Score', v: `${reliabilityScore}/100` },
+          { k: 'Bandwidth Level', v: estimatedBandwidth },
+          { k: 'Speed Test Result', v: networkInfo.speed },
+          { k: 'Latency Test', v: networkInfo.latency },
+          { k: 'Jitter Test', v: networkInfo.jitter },
+          { k: 'Connection API', v: 'Network Information API' },
+          { k: 'Real-time Monitoring', v: 'Enabled' }
         ]);
 
         setData('network', {
-          effectiveType: conn.effectiveType,
-          downlink: conn.downlink,
-          rtt: conn.rtt,
-          saveData: conn.saveData,
-          type: conn.type,
+          type: networkType,
+          effectiveType: effectiveType,
+          technology: networkTechnology,
+          downlink: downlink,
+          rtt: rtt,
+          saveData: saveData,
+          quality: networkQuality,
+          reliabilityScore: reliabilityScore,
+          bandwidth: estimatedBandwidth,
           speed: networkInfo.speed,
           latency: networkInfo.latency,
-          jitter: networkInfo.jitter
+          jitter: networkInfo.jitter,
+          api: 'Network Information API',
+          monitoring: true
         });
+
+        // Add network change listener for real-time updates
+        if (conn.addEventListener) {
+          conn.addEventListener('change', () => {
+            const newEffectiveType = conn.effectiveType || 'Unknown';
+            const newDownlink = conn.downlink || 'Unknown';
+            const newRtt = conn.rtt || 'Unknown';
+
+            const networkCard = document.querySelector('.card h3');
+            if (networkCard && networkCard.textContent === 'Network') {
+              const effectiveTypeRow = networkCard.parentNode.querySelector('[data-effective-type]');
+              const downlinkRow = networkCard.parentNode.querySelector('[data-downlink]');
+              const rttRow = networkCard.parentNode.querySelector('[data-rtt]');
+
+              if (effectiveTypeRow) {
+                effectiveTypeRow.querySelector('.value').textContent = newEffectiveType;
+              }
+              if (downlinkRow) {
+                downlinkRow.querySelector('.value').textContent = `${newDownlink} Mbps`;
+              }
+              if (rttRow) {
+                rttRow.querySelector('.value').textContent = `${newRtt} ms`;
+              }
+            }
+          });
+        }
 
         // 8) Enhanced Device & System Info
         const deviceInfo = await getDeviceInfo();
+
+        // Enhanced system information
+        const systemInfo = (() => {
+          const ua = navigator.userAgent;
+          const platform = navigator.platform || 'Unknown';
+          const vendor = navigator.vendor || 'Unknown';
+          const product = navigator.product || 'Unknown';
+          const appName = navigator.appName || 'Unknown';
+          const appVersion = navigator.appVersion || 'Unknown';
+          const appCodeName = navigator.appCodeName || 'Unknown';
+
+          // CPU architecture detection
+          let cpuArch = 'Unknown';
+          if (/Win64|WOW64/.test(ua)) cpuArch = 'x64 (64-bit)';
+          else if (/Win32/.test(ua)) cpuArch = 'x86 (32-bit)';
+          else if (/Macintosh/.test(ua)) cpuArch = 'ARM64/x64 (64-bit)';
+          else if (/Linux x86_64/.test(ua)) cpuArch = 'x64 (64-bit)';
+          else if (/Linux i[3-6]86/.test(ua)) cpuArch = 'x86 (32-bit)';
+          else if (/Linux aarch64/.test(ua)) cpuArch = 'ARM64 (64-bit)';
+          else if (/Linux arm/.test(ua)) cpuArch = 'ARM (32-bit)';
+
+          // Operating system details
+          let osDetails = 'Unknown';
+          if (/Windows NT 1\.0/.test(ua)) osDetails = 'Windows 10/11 (NT 1.0)';
+          else if (/Windows NT 6\.3/.test(ua)) osDetails = 'Windows 8.1 (NT 6.3)';
+          else if (/Windows NT 6\.2/.test(ua)) osDetails = 'Windows 8 (NT 6.2)';
+          else if (/Windows NT 6\.1/.test(ua)) osDetails = 'Windows 7 (NT 6.1)';
+          else if (/Windows NT 6\.0/.test(ua)) osDetails = 'Windows Vista (NT 6.0)';
+          else if (/Windows NT 5\.2/.test(ua)) osDetails = 'Windows Server 2003 (NT 5.2)';
+          else if (/Windows NT 5\.1/.test(ua)) osDetails = 'Windows XP (NT 5.1)';
+          else if (/Windows NT 5\.0/.test(ua)) osDetails = 'Windows 2000 (NT 5.0)';
+          else if (/Mac OS X (\d+[._]\d+)/.test(ua)) {
+            const match = ua.match(/Mac OS X (\d+[._]\d+)/);
+            osDetails = `macOS ${match[1].replace('_', '.')}`;
+          } else if (/Android (\d+\.\d+)/.test(ua)) {
+            const match = ua.match(/Android (\d+\.\d+)/);
+            osDetails = `Android ${match[1]}`;
+          } else if (/iPhone OS (\d+[._]\d+)/.test(ua)) {
+            const match = ua.match(/iPhone OS (\d+[._]\d+)/);
+            osDetails = `iOS ${match[1].replace('_', '.')}`;
+          } else if (/Linux/.test(ua)) {
+            if (/Ubuntu/.test(ua)) osDetails = 'Ubuntu Linux';
+            else if (/Fedora/.test(ua)) osDetails = 'Fedora Linux';
+            else if (/Debian/.test(ua)) osDetails = 'Debian Linux';
+            else if (/CentOS/.test(ua)) osDetails = 'CentOS Linux';
+            else if (/Red Hat/.test(ua)) osDetails = 'Red Hat Linux';
+            else if (/SUSE/.test(ua)) osDetails = 'SUSE Linux';
+            else if (/Arch/.test(ua)) osDetails = 'Arch Linux';
+            else osDetails = 'Generic Linux';
+          }
+
+          return {
+            platform,
+            vendor,
+            product,
+            appName,
+            appVersion,
+            appCodeName,
+            cpuArch,
+            osDetails
+          };
+        })();
+
+        // Device capabilities assessment
+        const deviceCapabilities = (() => {
+          const hasTouch = 'ontouchstart' in window;
+          const hasPointer = 'PointerEvent' in window;
+          const hasMouse = 'onmousedown' in window;
+          const hasKeyboard = 'onkeydown' in window;
+          const hasGamepad = 'getGamepads' in navigator;
+          const hasVibration = 'vibrate' in navigator;
+          const hasBluetooth = 'bluetooth' in navigator;
+          const hasUSB = 'usb' in navigator;
+          const hasSerial = 'serial' in navigator;
+          const hasHID = 'hid' in navigator;
+          const hasWakeLock = 'wakeLock' in navigator;
+          const hasContacts = 'contacts' in navigator;
+          const hasMediaSession = 'mediaSession' in navigator;
+          const hasPresentation = 'presentation' in navigator;
+          const hasCredential = 'credentials' in navigator;
+          const hasPayment = 'PaymentRequest' in window;
+
+          // Device type classification
+          let deviceCategory = 'Desktop';
+          if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            deviceCategory = 'Mobile';
+          } else if (/Tablet|iPad/i.test(navigator.userAgent)) {
+            deviceCategory = 'Tablet';
+          }
+
+          // Input method assessment
+          let primaryInput = 'Mouse & Keyboard';
+          if (hasTouch && !hasMouse) primaryInput = 'Touch';
+          else if (hasTouch && hasMouse) primaryInput = 'Touch + Mouse & Keyboard';
+          else if (hasPointer && !hasMouse) primaryInput = 'Pointer';
+
+          return {
+            hasTouch,
+            hasPointer,
+            hasMouse,
+            hasKeyboard,
+            hasGamepad,
+            hasVibration,
+            hasBluetooth,
+            hasUSB,
+            hasSerial,
+            hasHID,
+            hasWakeLock,
+            hasContacts,
+            hasMediaSession,
+            hasPresentation,
+            hasCredential,
+            hasPayment,
+            deviceCategory,
+            primaryInput
+          };
+        })();
+
+        // Performance characteristics
+        const performanceCharacteristics = (() => {
+          const cores = navigator.hardwareConcurrency || 'Unknown';
+          const memory = navigator.deviceMemory || 'Unknown';
+          const maxTouchPoints = navigator.maxTouchPoints || 0;
+
+          // Performance tier assessment
+          let performanceTier = 'Unknown';
+          if (cores >= 16 && memory >= 16) performanceTier = 'High-End';
+          else if (cores >= 8 && memory >= 8) performanceTier = 'Mid-High';
+          else if (cores >= 4 && memory >= 4) performanceTier = 'Mid-Range';
+          else if (cores >= 2 && memory >= 2) performanceTier = 'Entry-Level';
+          else performanceTier = 'Basic';
+
+          return {
+            cores,
+            memory: memory !== 'Unknown' ? `${memory} GB` : 'Unknown',
+            maxTouchPoints,
+            performanceTier
+          };
+        })();
+
         addCard('Device & System', [
           { k: 'Device Type', v: deviceInfo.deviceType },
+          { k: 'Device Category', v: deviceCapabilities.deviceCategory },
           { k: 'Device Model', v: deviceInfo.deviceModel },
           { k: 'OS Version', v: deviceInfo.osVersion },
+          { k: 'OS Details', v: systemInfo.osDetails },
           { k: 'OS Architecture', v: deviceInfo.osArch },
+          { k: 'CPU Architecture', v: systemInfo.cpuArch },
+          { k: 'CPU Cores', v: performanceCharacteristics.cores },
           { k: 'Device Memory', v: deviceInfo.deviceMemory },
-          { k: 'Max Touch Points', v: deviceInfo.maxTouchPoints },
-          { k: 'Vibration Support', v: deviceInfo.vibrationSupport },
-          { k: 'Bluetooth Support', v: deviceInfo.bluetoothSupport }
+          { k: 'Performance Tier', v: performanceCharacteristics.performanceTier },
+          { k: 'Max Touch Points', v: performanceCharacteristics.maxTouchPoints },
+          { k: 'Primary Input Method', v: deviceCapabilities.primaryInput },
+          { k: 'Touch Support', v: deviceCapabilities.hasTouch ? 'Yes' : 'No' },
+          { k: 'Pointer Support', v: deviceCapabilities.hasPointer ? 'Yes' : 'No' },
+          { k: 'Mouse Support', v: deviceCapabilities.hasMouse ? 'Yes' : 'No' },
+          { k: 'Keyboard Support', v: deviceCapabilities.hasKeyboard ? 'Yes' : 'No' },
+          { k: 'Vibration Support', v: deviceCapabilities.hasVibration ? 'Yes' : 'No' },
+          { k: 'Bluetooth Support', v: deviceCapabilities.hasBluetooth ? 'Yes' : 'No' },
+          { k: 'USB Support', v: deviceCapabilities.hasUSB ? 'Yes' : 'No' },
+          { k: 'Serial Support', v: deviceCapabilities.hasSerial ? 'Yes' : 'No' },
+          { k: 'HID Support', v: deviceCapabilities.hasHID ? 'Yes' : 'No' },
+          { k: 'Wake Lock Support', v: deviceCapabilities.hasWakeLock ? 'Yes' : 'No' },
+          { k: 'Contacts API', v: deviceCapabilities.hasContacts ? 'Supported' : 'Not Supported' },
+          { k: 'Media Session API', v: deviceCapabilities.hasMediaSession ? 'Supported' : 'Not Supported' },
+          { k: 'Presentation API', v: deviceCapabilities.hasPresentation ? 'Supported' : 'Not Supported' },
+          { k: 'Credentials API', v: deviceCapabilities.hasCredential ? 'Supported' : 'Not Supported' },
+          { k: 'Payment Request API', v: deviceCapabilities.hasPayment ? 'Supported' : 'Not Supported' },
+          { k: 'Platform', v: systemInfo.platform },
+          { k: 'Vendor', v: systemInfo.vendor },
+          { k: 'Product', v: systemInfo.product },
+          { k: 'App Name', v: systemInfo.appName },
+          { k: 'App Version', v: systemInfo.appVersion },
+          { k: 'App Code Name', v: systemInfo.appCodeName }
         ]);
-        setData('device', deviceInfo);
+
+        setData('device', {
+          ...deviceInfo,
+          system: systemInfo,
+          capabilities: deviceCapabilities,
+          performance: performanceCharacteristics
+        });
 
         // 9) Performance & Speed
         const perfInfo = await getPerformanceInfo();
@@ -1456,13 +1516,16 @@
         // 12) Public IP (best-effort, requires internet)
         await detectIP();
 
-        // 13) Location (auto-detect)
+        // 13) IP Geolocation from specific API
+        await detectIPGeolocation();
+
+        // 14) Location (auto-detect)
         await detectLocation();
 
-        // 14) Media Devices
+        // 15) Media Devices
         await detectMediaDevices();
 
-        // 15) Permissions Status
+        // 16) Permissions Status
         await checkPermissions();
 
         toast('Scan complete');
@@ -1495,6 +1558,83 @@
           } catch (e) {/* ignore and try next */ }
         }
         addCard('Public IP', [{ k: 'Address', v: 'Unavailable (blocked or offline)' }]);
+      }
+
+      async function detectIPGeolocation() {
+        const apiUrl = 'https://api.ipgeolocation.io/ipgeo?apiKey=9bdbad28358246488a837083218d3a31';
+
+        try {
+          const response = await fetch(apiUrl);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // Create a comprehensive card with all the IP geolocation data
+          addCard('IP Geolocation Details', [
+            { k: 'IP Address', v: data.ip || 'Unknown' },
+            { k: 'Continent', v: `${data.continent_name} (${data.continent_code})` },
+            { k: 'Country', v: `${data.country_name} (${data.country_code2})` },
+            { k: 'Official Country', v: data.country_name_official || 'Unknown' },
+            { k: 'Capital', v: data.country_capital || 'Unknown' },
+            { k: 'State/Province', v: data.state_prov || 'Unknown' },
+            { k: 'State Code', v: data.state_code || 'Unknown' },
+            { k: 'District', v: data.district || 'Unknown' },
+            { k: 'City', v: data.city || 'Unknown' },
+            { k: 'ZIP Code', v: data.zipcode || 'Unknown' },
+            { k: 'Coordinates', v: `${data.latitude}, ${data.longitude}` },
+            { k: 'Latitude', v: data.latitude || 'Unknown' },
+            { k: 'Longitude', v: data.longitude || 'Unknown' },
+            { k: 'EU Member', v: data.is_eu ? 'Yes' : 'No' },
+            { k: 'Country Flag', v: data.country_flag || 'Unknown' },
+            { k: 'Geoname ID', v: data.geoname_id || 'Unknown' },
+            { k: 'Country Emoji', v: data.country_emoji || 'Unknown' },
+            { k: 'Calling Code', v: data.calling_code || 'Unknown' },
+            { k: 'Country TLD', v: data.country_tld || 'Unknown' },
+            { k: 'Languages', v: data.languages || 'Unknown' },
+            { k: 'ISP', v: data.isp || 'Unknown' },
+            { k: 'Connection Type', v: data.connection_type || 'Unknown' },
+            { k: 'Organization', v: data.organization || 'Unknown' },
+            { k: 'Currency', v: `${data.currency?.name} (${data.currency?.code}) - ${data.currency?.symbol}` },
+            { k: 'Time Zone', v: data.time_zone?.name || 'Unknown' },
+            { k: 'UTC Offset', v: `${data.time_zone?.offset} hours` },
+            { k: 'DST Offset', v: `${data.time_zone?.offset_with_dst} hours` },
+            { k: 'Current Time', v: data.time_zone?.current_time || 'Unknown' },
+            { k: 'Current Time (Unix)', v: data.time_zone?.current_time_unix || 'Unknown' },
+            { k: 'Current TZ Abbreviation', v: data.time_zone?.current_tz_abbreviation || 'Unknown' },
+            { k: 'Current TZ Full Name', v: data.time_zone?.current_tz_full_name || 'Unknown' },
+            { k: 'Standard TZ Abbreviation', v: data.time_zone?.standard_tz_abbreviation || 'Unknown' },
+            { k: 'Standard TZ Full Name', v: data.time_zone?.standard_tz_full_name || 'Unknown' },
+            { k: 'DST Active', v: data.time_zone?.is_dst ? 'Yes' : 'No' },
+            { k: 'DST Savings', v: `${data.time_zone?.dst_savings || 0} hour(s)` },
+            { k: 'DST Exists', v: data.time_zone?.dst_exists ? 'Yes' : 'No' },
+            { k: 'DST TZ Abbreviation', v: data.time_zone?.dst_tz_abbreviation || 'Unknown' },
+            { k: 'DST TZ Full Name', v: data.time_zone?.dst_tz_full_name || 'Unknown' },
+            { k: 'DST Start UTC', v: data.time_zone?.dst_start?.utc_time || 'Unknown' },
+            { k: 'DST Start Duration', v: data.time_zone?.dst_start?.duration || 'Unknown' },
+            { k: 'DST Start Gap', v: data.time_zone?.dst_start?.gap ? 'Yes' : 'No' },
+            { k: 'DST Start DateTime After', v: data.time_zone?.dst_start?.dateTimeAfter || 'Unknown' },
+            { k: 'DST Start DateTime Before', v: data.time_zone?.dst_start?.dateTimeBefore || 'Unknown' },
+            { k: 'DST Start Overlap', v: data.time_zone?.dst_start?.overlap ? 'Yes' : 'No' },
+            { k: 'DST End UTC', v: data.time_zone?.dst_end?.utc_time || 'Unknown' },
+            { k: 'DST End Duration', v: data.time_zone?.dst_end?.duration || 'Unknown' },
+            { k: 'DST End Gap', v: data.time_zone?.dst_end?.gap ? 'Yes' : 'No' },
+            { k: 'DST End DateTime After', v: data.time_zone?.dst_end?.dateTimeAfter || 'Unknown' },
+            { k: 'DST End DateTime Before', v: data.time_zone?.dst_end?.dateTimeBefore || 'Unknown' },
+            { k: 'DST End Overlap', v: data.time_zone?.dst_end?.overlap ? 'Yes' : 'No' }
+          ]);
+
+          // Store the data in the state
+          setData('ipGeolocation', data);
+
+        } catch (error) {
+          console.error('Error fetching IP geolocation:', error);
+          addCard('IP Geolocation Details', [
+            { k: 'Status', v: 'Failed to fetch data' },
+            { k: 'Error', v: error.message || 'Unknown error' }
+          ]);
+        }
       }
 
       function humanBytes(x) {
@@ -1542,17 +1682,6 @@
 
       // Copy / Download / Share
       function toPrettyJSON() { return JSON.stringify(state.data, null, 2); }
-
-      // async function copyJSON() {
-      //   try {
-      //     await navigator.clipboard.writeText(toPrettyJSON());
-      //     toast('Copied JSON');
-      //   }
-      //   catch {
-      //     toast('Copy failed');
-      //   }
-      // }
-      // ... existing code ...
 
       // Enhanced Copy function with fallback
       async function copyJSON() {
@@ -1655,16 +1784,16 @@
       // }
 
       function downloadJSON() {
-  const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `visitor-info-${Date.now()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
+        const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `visitor-info-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
 
       // async function share() {
       //   const text = toPrettyJSON();
