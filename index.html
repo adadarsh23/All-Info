@@ -19,9 +19,13 @@
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/44/44386.png" />
 
   <!-- font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel="stylesheet">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" as="style">
+  <link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel="stylesheet" media="print"
+    onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Macondo&display=swap" rel="stylesheet">
+  </noscript>
+
 
   <!-- Open Graph / Facebook -->
   <meta property="og:title" content="All-in-One Visitor Info" />
@@ -38,7 +42,7 @@
     content="Instantly detect your device, browser, screen, network, location and optional personal info with one click." />
 
 
-  <style>
+  <style defer>
     :root {
       --bg: #0b1020;
       --card: #121a33;
@@ -275,7 +279,7 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <script defer>
+  <script defer type="module">
     // Main app script
     document.addEventListener('DOMContentLoaded', function () {
       const $ = (sel) => document.querySelector(sel);
@@ -2315,7 +2319,7 @@
           if (response.ok) {
             const result = await response.json();
             toast('Data Scan successfully!');
-            console.log( result);
+            console.log(result);
           } else {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
@@ -2342,7 +2346,7 @@
       //detect();
     });
   </script>
-  <script defer>
+  <script defer type="module">
     const canvas = document.getElementById("fireworks");
     const ctx = canvas.getContext("2d");
 
