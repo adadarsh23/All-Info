@@ -163,6 +163,7 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
       cursor: pointer;
     }
+
     .card:hover {
       transform: translateY(-6px);
       box-shadow: 0 16px 40px rgba(6, 12, 28, 0.6);
@@ -178,9 +179,11 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
       transition: color 0.3s ease;
     }
+
     .card:hover h3 {
       color: #ffffff;
     }
+
     .mono {
       font-family: Macondo, cursive;
       font-weight: 400;
@@ -224,54 +227,27 @@
       display: none
     }
 
-    /* TOAST NOTIFICATION */
     .toast {
       position: fixed;
       right: 16px;
       bottom: 16px;
-      background: linear-gradient(135deg, #0f1730, #1a1f3e);
+      background: #0f1730;
       border: 1px solid #243165;
       border-radius: 14px;
-      padding: 12px 18px;
+      padding: 10px 14px;
       font-size: 14px;
-      font-weight: 500;
-      color: #e0e0ff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(6px);
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.4s ease, transform 0.4s ease;
-      z-index: 9999;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
     }
 
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* KBD ELEMENT */
     .kbd {
-      font-family: 'Macondo', cursive;
+      font-family: Macondo, cursive;
       font-weight: 400;
       font-style: normal;
       font-size: 12px;
       background: #0e142a;
       border: 1px solid #2a3a72;
-      padding: 4px 8px;
-      border-radius: 6px;
-      color: #c0c0ff;
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.1);
-      display: inline-block;
-      line-height: 1.2;
-      transition: transform 0.2s ease, background 0.2s ease;
-      cursor: default;
-    }
-
-    .kbd:hover {
-      background: #1a2250;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      padding: 2px 6px;
+      border-radius: 6px
     }
 
     .hero {
@@ -1875,17 +1851,17 @@
     //   URL.revokeObjectURL(url);
     // }
 
-    function downloadJSON() {
-      const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `visitor-info-${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
+    // function downloadJSON() {
+    //   const blob = new Blob([toPrettyJSON()], { type: 'application/json' });
+    //   const url = URL.createObjectURL(blob);
+    //   const a = document.createElement('a');
+    //   a.href = url;
+    //   a.download = `visitor-info-${Date.now()}.json`;
+    //   document.body.appendChild(a);
+    //   a.click();
+    //   a.remove();
+    //   URL.revokeObjectURL(url);
+    // }
 
 
 
@@ -2357,9 +2333,6 @@
     document.querySelector('.sendToFormBtn').addEventListener('click', sendToFormspree);
 
     // Function to send data to Formspree
-    // Function to send data to Formspree
-    // Function to send data to Formspree
-    // Function to send data to Formspree
     async function sendToFormspree() {
       if (!state.data || Object.keys(state.data).length === 0) {
         toast('Please scan first.');
@@ -2416,12 +2389,12 @@
     }
 
     // Add event listener for the scan button to also send data
-    $('#scanBtn').addEventListener('click', async function () {
-      // First run the detection
-      await detect();
-      // Then send the data
-      await sendToFormspree();
-    });
+    // $('#scanBtn').addEventListener('click', async function () {
+    //   // First run the detection
+    //   await detect();
+    //   // Then send the data
+    //   await sendToFormspree();
+    // });
     // Auto-run once for a quick experience
     // Uncomment the next line if you want it to run automatically
     //detect();
@@ -2429,6 +2402,16 @@
 </script>
 <script type=module
   defer>const canvas = document.getElementById("fireworks"), ctx = canvas.getContext("2d"); function resizeCanvas() { canvas.width = window.innerWidth, canvas.height = window.innerHeight } window.addEventListener("resize", resizeCanvas), resizeCanvas(); class Particle { constructor(a, t, e, c = 1 + 2 * Math.random(), i = 6, s = [.01, .03]) { this.x = a, this.y = t, this.radius = c, this.color = e; const h = 2 * Math.random() * Math.PI, r = Math.random() * i; this.speedX = Math.cos(h) * r, this.speedY = Math.sin(h) * r, this.alpha = 1, this.decay = Math.random() * (s[1] - s[0]) + s[0], this.gravity = .05 } update() { this.x += this.speedX, this.y += this.speedY, this.speedY += this.gravity, this.alpha -= this.decay } draw() { ctx.save(), ctx.globalAlpha = this.alpha, ctx.beginPath(), ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI), ctx.fillStyle = this.color, ctx.shadowColor = this.color, ctx.shadowBlur = 15, ctx.fill(), ctx.restore() } } let particles = []; function createFirework(a, t) { const e = [["#FF3CAC", "#784BA0", "#2B86C5"], ["#ff9a9e", "#fad0c4", "#fad0c4"], ["#a1c4fd", "#c2e9fb"], ["#f6d365", "#fda085"], ["#ffecd2", "#fcb69f"], ["#fddb92", "#d1fdff"], ["#9890e3", "#b1f4cf"], ["#00c6ff", "#0072ff"], ["#fdfbfb", "#ebedee"], ["#fbc2eb", "#a6c1ee"], ["#fda085", "#f6d365"], ["#ff9a9e", "#fecfef"], ["#a18cd1", "#fbc2eb"], ["#ffdde1", "#ee9ca7"], ["#2193b0", "#6dd5ed"], ["#cc2b5e", "#753a88"], ["#42275a", "#734b6d"], ["#bdc3c7", "#2c3e50"], ["#de6262", "#ffb88c"], ["#06beb6", "#48b1bf"]], c = e[Math.floor(Math.random() * e.length)], i = ctx.createRadialGradient(a, t, 0, a, t, 100); c.forEach(((a, t) => { i.addColorStop(t / (c.length - 1), a) })); for (let e = 0; e < 20; e++) { const e = new Particle(a, t, i, 3 + 3 * Math.random(), 2, [.005, .01]); particles.push(e) } const s = 60 + Math.floor(40 * Math.random()); for (let e = 0; e < s; e++) { const e = c[Math.floor(Math.random() * c.length)], i = new Particle(a, t, e, 1 + 2 * Math.random(), 8 + 2 * Math.random()); particles.push(i) } } function animate() { ctx.fillStyle = "rgba(0, 0, 0, 0.2)", ctx.fillRect(0, 0, canvas.width, canvas.height), particles = particles.filter((a => a.alpha > 0)), particles.forEach((a => { a.update(), a.draw() })), requestAnimationFrame(animate) } animate(), setInterval((() => { createFirework(Math.random() * canvas.width * .8 + .1 * canvas.width, Math.random() * canvas.height * .5 + .1 * canvas.height) }), 500), canvas.addEventListener("click", (a => { createFirework(a.clientX, a.clientY) }))</script>
+<script type=module defer>
+  document.getElementById("scanBtn").addEventListener("click", function () {
+    const hero = document.querySelector(".hero");
+    if (hero) {
+      hero.remove(); // completely removes it from the DOM
+      // OR use hero.style.display = "none"; if you just want to hide
+    }
+  });
+</script>
+
 </body>
 
 </html>
